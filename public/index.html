@@ -1,889 +1,2467 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
+<meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Leelajani Ayur Care CRM</title>
+<title>Leelajani Ayur Care — Lead CRM</title>
+
 <style>
-:root{--teal:#123f37;--teal2:#1d5a4e;--gold:#c99a3d;--cream:#f7f5ef;--ink:#18312d;--muted:#6b7773;--line:#e2e7e4;--white:#fff;--danger:#b33a3a;--ok:#198754}
-*{box-sizing:border-box}body{margin:0;font-family:Inter,Arial,sans-serif;background:#f3f6f4;color:var(--ink)}
-button,input,select,textarea{font:inherit}button{cursor:pointer;border:0}.hidden{display:none!important}
-.app{display:flex;min-height:100vh}.sidebar{width:245px;background:var(--teal);color:#fff;position:fixed;inset:0 auto 0 0;padding:22px 14px;overflow:auto}
-.brand{padding:5px 12px 25px;border-bottom:1px solid rgba(255,255,255,.15);margin-bottom:15px}.brand b{font-size:20px}.brand small{display:block;opacity:.7;margin-top:4px}
-.nav button{display:block;width:100%;text-align:left;background:transparent;color:#eaf2ef;padding:12px 14px;border-radius:8px;margin:3px 0}.nav button:hover,.nav button.active{background:rgba(255,255,255,.12)}
-.main{margin-left:245px;width:calc(100% - 245px)}.top{height:68px;background:#fff;border-bottom:1px solid var(--line);display:flex;align-items:center;justify-content:space-between;padding:0 28px;position:sticky;top:0;z-index:5}.top h2{margin:0;font-size:20px}.userbox{display:flex;align-items:center;gap:12px}.avatar{width:36px;height:36px;border-radius:50%;background:var(--gold);color:#fff;display:grid;place-items:center;font-weight:700}
-.content{padding:26px}.grid{display:grid;gap:18px}.cards{grid-template-columns:repeat(auto-fit,minmax(180px,1fr))}.card{background:#fff;border:1px solid var(--line);border-radius:12px;padding:20px;box-shadow:0 3px 15px rgba(20,50,45,.05)}.metric{font-size:28px;font-weight:700;margin-top:8px}.muted{color:var(--muted);font-size:13px}
-.section{margin-top:24px}.sectionhead{display:flex;justify-content:space-between;align-items:center;margin-bottom:12px}.sectionhead h3{margin:0}
-.btn{background:var(--teal);color:#fff;padding:10px 15px;border-radius:7px}.btn.gold{background:var(--gold)}.btn.light{background:#edf2f0;color:var(--ink)}.btn.danger{background:var(--danger)}.btn:disabled{opacity:.5;cursor:not-allowed}
-.tablewrap{background:#fff;border:1px solid var(--line);border-radius:10px;overflow:auto}.table{width:100%;border-collapse:collapse;min-width:700px}.table th,.table td{padding:12px 14px;border-bottom:1px solid var(--line);text-align:left;font-size:13px}.table th{background:#f8faf9;color:#53625e}.table tr:hover td{background:#fbfcfb}
-.toolbar{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:14px}.toolbar input,.toolbar select,.field input,.field select,.field textarea{border:1px solid #cfd8d4;border-radius:7px;padding:10px;background:#fff;width:100%}.toolbar input{width:260px}
-.formgrid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px}.field label{display:block;font-size:12px;font-weight:700;margin-bottom:5px}.field.full{grid-column:1/-1}.modal{position:fixed;inset:0;background:rgba(10,30,25,.48);display:grid;place-items:center;padding:20px;z-index:20}.modalbox{background:#fff;border-radius:14px;max-width:850px;width:100%;max-height:90vh;overflow:auto;padding:24px}.modalhead{display:flex;justify-content:space-between;align-items:center;margin-bottom:18px}.modalhead h3{margin:0}.x{background:transparent;font-size:25px;color:#667}
-.login{min-height:100vh;display:grid;place-items:center;background:linear-gradient(135deg,#123f37,#e9dfc7)}.loginbox{background:#fff;width:min(420px,92vw);padding:35px;border-radius:16px;box-shadow:0 20px 60px rgba(0,0,0,.18)}.loginbox h1{margin:0;color:var(--teal)}.loginbox p{color:var(--muted)}.loginbox .field{margin:15px 0}.loginbox .btn{width:100%;margin-top:8px}
-.toast{position:fixed;right:22px;bottom:22px;background:#173f38;color:#fff;padding:13px 17px;border-radius:8px;z-index:50;box-shadow:0 8px 25px #0002}.toast.err{background:var(--danger)}
-.badge{display:inline-block;padding:4px 8px;border-radius:20px;background:#e9f2ef;font-size:11px}.badge.ok{background:#e4f5eb;color:#187545}.badge.warn{background:#fff3d9;color:#8b641c}.badge.red{background:#fde7e7;color:#9c3030}
-.kpi{display:flex;justify-content:space-between;align-items:center}.empty{text-align:center;padding:35px;color:var(--muted)}
-@media(max-width:850px){.sidebar{width:70px;padding:15px 8px}.brand b,.brand small,.nav button span{display:none}.nav button{text-align:center}.main{margin-left:70px;width:calc(100% - 70px)}.content{padding:16px}.formgrid{grid-template-columns:1fr}.top{padding:0 16px}}
+:root{
+  --teal:#173f38;
+  --gold:#c9a24a;
+  --bg:#f8f5ee;
+  --light:#e6e2d8;
+  --white:#fff;
+  --text:#26322e;
+}
+
+*{
+  box-sizing:border-box;
+}
+
+body{
+  margin:0;
+  font-family:Arial,sans-serif;
+  background:var(--bg);
+  color:var(--text);
+}
+
+button,input,select,textarea{
+  font:inherit;
+}
+
+button{
+  cursor:pointer;
+}
+
+/* CRITICAL FIX */
+.hidden{
+  display:none !important;
+}
+
+.login{
+  min-height:100vh;
+  display:grid;
+  place-items:center;
+  background:linear-gradient(135deg,#173f38,#274f46);
+}
+
+.loginbox{
+  background:#fff;
+  width:min(430px,92vw);
+  padding:35px;
+  border-radius:18px;
+  box-shadow:0 25px 80px #0004;
+}
+
+.loginbox h1{
+  color:var(--teal);
+  margin-top:0;
+}
+
+.field{
+  margin:12px 0;
+}
+
+.field label{
+  display:block;
+  font-size:12px;
+  font-weight:700;
+  margin-bottom:6px;
+}
+
+.field input,
+.field select,
+.field textarea{
+  width:100%;
+  padding:10px;
+  border:1px solid var(--light);
+  border-radius:9px;
+}
+
+.field textarea{
+  min-height:90px;
+  resize:vertical;
+}
+
+.btn{
+  border:0;
+  border-radius:9px;
+  padding:10px 14px;
+  background:var(--teal);
+  color:#fff;
+}
+
+.gold{
+  background:var(--gold);
+  color:#1d281f;
+}
+
+.light{
+  background:#fff;
+  color:var(--teal);
+  border:1px solid var(--light);
+}
+
+.app{
+  min-height:100vh;
+}
+
+.sidebar{
+  position:fixed;
+  inset:0 auto 0 0;
+  width:230px;
+  background:var(--teal);
+  color:#fff;
+  padding:20px 12px;
+}
+
+.brand{
+  padding:8px 10px 25px;
+}
+
+.brand b{
+  font-size:21px;
+  display:block;
+}
+
+.nav button{
+  display:block;
+  width:100%;
+  text-align:left;
+  background:none;
+  color:#fff;
+  border:0;
+  padding:12px;
+  border-radius:8px;
+  margin:3px 0;
+}
+
+.nav button.active,
+.nav button:hover{
+  background:#ffffff18;
+}
+
+.main{
+  margin-left:230px;
+}
+
+.top{
+  height:70px;
+  background:#fff;
+  border-bottom:1px solid var(--light);
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  padding:0 25px;
+}
+
+.content{
+  padding:22px;
+}
+
+.cards{
+  display:grid;
+  grid-template-columns:repeat(4,1fr);
+  gap:14px;
+}
+
+.card{
+  background:#fff;
+  border:1px solid var(--light);
+  border-radius:12px;
+  padding:17px;
+}
+
+.metric{
+  font-size:28px;
+  font-weight:800;
+}
+
+.muted{
+  color:#68736f;
+  font-size:13px;
+}
+
+.toolbar{
+  display:flex;
+  gap:8px;
+  flex-wrap:wrap;
+  margin-bottom:15px;
+}
+
+.toolbar input,
+.toolbar select{
+  padding:10px;
+  border:1px solid var(--light);
+  border-radius:9px;
+}
+
+.grow{
+  flex:1;
+}
+
+.tablewrap{
+  overflow:auto;
+  background:#fff;
+  border:1px solid var(--light);
+  border-radius:12px;
+}
+
+.table{
+  width:100%;
+  border-collapse:collapse;
+  min-width:900px;
+}
+
+.table th,
+.table td{
+  padding:10px;
+  border-bottom:1px solid var(--light);
+  text-align:left;
+  font-size:13px;
+}
+
+.table th{
+  background:#faf8f2;
+}
+
+.badge{
+  padding:4px 8px;
+  border-radius:20px;
+  background:#e9f2ef;
+  font-size:11px;
+}
+
+/*
+ IMPORTANT:
+ Modal itself starts hidden.
+ .hidden !important guarantees it stays hidden.
+*/
+.modal{
+  position:fixed;
+  inset:0;
+  background:#0006;
+  display:grid;
+  place-items:center;
+  padding:20px;
+  z-index:9999;
+}
+
+.modal.hidden{
+  display:none !important;
+}
+
+.modalbox{
+  background:#fff;
+  width:min(850px,96vw);
+  max-height:90vh;
+  overflow:auto;
+  border-radius:15px;
+  padding:20px;
+  box-shadow:0 25px 80px #0005;
+}
+
+.modalhead{
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+}
+
+.x{
+  border:0;
+  background:none;
+  font-size:25px;
+}
+
+.formgrid{
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:12px;
+}
+
+.full{
+  grid-column:1/-1;
+}
+
+@media(max-width:850px){
+
+  .sidebar{
+    width:65px;
+  }
+
+  .brand b,
+  .brand small,
+  .nav span{
+    display:none;
+  }
+
+  .main{
+    margin-left:65px;
+  }
+
+  .cards{
+    grid-template-columns:1fr 1fr;
+  }
+
+  .formgrid{
+    grid-template-columns:1fr;
+  }
+}
+
+@media(max-width:600px){
+
+  .cards{
+    grid-template-columns:1fr;
+  }
+
+  .top{
+    padding:0 12px;
+  }
+
+  .content{
+    padding:12px;
+  }
+}
 </style>
 </head>
+
 <body>
 
+<!-- ================= LOGIN ================= -->
+
 <div id="login" class="login">
+
   <div class="loginbox">
-    <h1>Leelajani Ayur Care</h1>
-    <p>Clinic CRM</p>
-    <div class="field"><label>Username</label><input id="loginUser" value="admin" autocomplete="username"></div>
-    <div class="field"><label>Password</label><input id="loginPass" type="password" value="admin123" autocomplete="current-password"></div>
-    <button class="btn gold" onclick="login()">Sign in</button>
-    <p class="muted" style="margin-top:15px">Use the account created by your CRM database seed.</p>
+
+    <h1>LEELAJANI</h1>
+
+    <p>Ayur Care — Lead CRM</p>
+
+    <div class="field">
+      <label>Username</label>
+      <input id="u" autocomplete="username">
+    </div>
+
+    <div class="field">
+      <label>Password</label>
+      <input id="p" type="password" autocomplete="current-password">
+    </div>
+
+    <button
+      class="btn gold"
+      style="width:100%"
+      onclick="login()">
+      Sign in
+    </button>
+
+    <div
+      id="loginError"
+      class="muted"
+      style="margin-top:12px;color:#a33">
+    </div>
+
   </div>
+
 </div>
+
+
+<!-- ================= APPLICATION ================= -->
 
 <div id="app" class="app hidden">
+
   <aside class="sidebar">
-    <div class="brand"><b>LEELAJANI</b><small>Ayur Care CRM</small></div>
-    <div class="nav">
-      <button onclick="showPage('dashboard')" id="nav-dashboard">▦ <span>Dashboard</span></button>
-      <button onclick="showPage('patients')" id="nav-patients">♙ <span>Patients</span></button>
-      <button onclick="showPage('leads')" id="nav-leads">◉ <span>Leads</span></button>
-      <button onclick="showPage('appointments')" id="nav-appointments">◷ <span>Appointments</span></button>
-      <button onclick="showPage('therapists')" id="nav-therapists">♧ <span>Therapists</span></button>
-      <button onclick="showPage('rooms')" id="nav-rooms">▤ <span>Rooms</span></button>
-      <button onclick="showPage('billing')" id="nav-billing">₹ <span>Billing</span></button>
-      <button onclick="showPage('reports')" id="nav-reports">▥ <span>Reports</span></button>
-      <button onclick="showPage('users')" id="nav-users">♙ <span>Users</span></button>
-      <button onclick="logout()">↪ <span>Logout</span></button>
+
+    <div class="brand">
+      <b>LEELAJANI</b>
+      <small>Lead CRM</small>
     </div>
+
+    <div class="nav">
+
+      <button
+        id="n-dashboard"
+        onclick="show('dashboard')">
+        ▦ <span>Dashboard</span>
+      </button>
+
+      <button
+        id="n-leads"
+        onclick="show('leads')">
+        ◉ <span>Leads</span>
+      </button>
+
+      <button
+        id="n-approvals"
+        onclick="show('approvals')">
+        ✓ <span>Price Approvals</span>
+      </button>
+
+      <button
+        id="n-reports"
+        onclick="show('reports')">
+        ▥ <span>Reports</span>
+      </button>
+
+      <button
+        id="n-packages"
+        onclick="show('packages')">
+        ◫ <span>Packages</span>
+      </button>
+
+      <button
+        id="n-users"
+        onclick="show('users')">
+        ♙ <span>Users</span>
+      </button>
+
+      <button onclick="logout()">
+        ↪ <span>Logout</span>
+      </button>
+
+    </div>
+
   </aside>
 
+
   <main class="main">
+
     <header class="top">
-      <h2 id="pageTitle">Dashboard</h2>
-      <div class="userbox">
-        <span id="userName"></span>
-        <div class="avatar" id="avatar">A</div>
-      </div>
+
+      <h2 id="title">Dashboard</h2>
+
+      <div id="who"></div>
+
     </header>
+
     <div id="content" class="content"></div>
+
   </main>
+
 </div>
 
-<div id="modal" class="modal hidden">
+
+<!-- ================= MODAL ================= -->
+
+<div
+  id="modal"
+  class="modal hidden"
+  onclick="if(event.target===this)closeM()">
+
   <div class="modalbox">
+
     <div class="modalhead">
-      <h3 id="modalTitle"></h3>
-      <button class="x" onclick="closeModal()">×</button>
+
+      <h3 id="mt"></h3>
+
+      <button
+        class="x"
+        onclick="closeM()">
+        ×
+      </button>
+
     </div>
-    <div id="modalBody"></div>
+
+    <div id="mb"></div>
+
   </div>
+
 </div>
 
-<div id="toast" class="toast hidden"></div>
 
 <script>
-const state={
-  token:localStorage.getItem('crm_token')||'',
-  user:JSON.parse(localStorage.getItem('crm_user')||'null'),
-  cache:{}
+
+/* =========================================================
+   APPLICATION STATE
+========================================================= */
+
+const S = {
+
+  token:
+    localStorage.getItem('crm_token') || '',
+
+  user:
+    JSON.parse(
+      localStorage.getItem('crm_user') || 'null'
+    ),
+
+  leads: [],
+
+  packages:
+    JSON.parse(
+      localStorage.getItem('crm_packages') || '[]'
+    )
+
 };
 
-const $=id=>document.getElementById(id);
 
-async function api(url,opt={}){
-  const r=await fetch(url,{
-    ...opt,
-    headers:{
-      'Content-Type':'application/json',
-      ...(opt.headers||{}),
-      ...(state.token?{Authorization:'Bearer '+state.token}:{})
-    }
-  });
-  let d=null;
-  try{d=await r.json()}catch{}
-  if(!r.ok){
-    throw new Error(d?.error||d?.details?.join?.(' ')||'Request failed')
+/* =========================================================
+   HELPERS
+========================================================= */
+
+const $ = id =>
+  document.getElementById(id);
+
+
+function esc(value){
+
+  return String(value ?? '')
+    .replace(/[&<>"']/g, m => ({
+      '&':'&amp;',
+      '<':'&lt;',
+      '>':'&gt;',
+      '"':'&quot;',
+      "'":'&#39;'
+    }[m]));
+
+}
+
+
+/* =========================================================
+   API
+========================================================= */
+
+async function api(url, options = {}){
+
+  const headers = {
+
+    'Content-Type':
+      'application/json',
+
+    ...(options.headers || {})
+
+  };
+
+  if(S.token){
+
+    headers.Authorization =
+      'Bearer ' + S.token;
+
   }
-  return d
+
+  const response =
+    await fetch(url,{
+      ...options,
+      headers
+    });
+
+  let data = {};
+
+  try{
+
+    data = await response.json();
+
+  }catch{
+
+    data = {};
+
+  }
+
+  if(!response.ok){
+
+    throw new Error(
+      data.error ||
+      data.message ||
+      'Request failed'
+    );
+
+  }
+
+  return data;
+
 }
 
-function toast(msg,err=false){
-  const t=$('toast');
-  t.textContent=msg;
-  t.className='toast'+(err?' err':'');
-  t.classList.remove('hidden');
-  setTimeout(()=>t.classList.add('hidden'),3200)
-}
+
+/* =========================================================
+   LOGIN
+========================================================= */
 
 async function login(){
-  try{
-    const d=await api('/api/auth/login',{
-      method:'POST',
-      body:JSON.stringify({
-        username:$('loginUser').value,
-        password:$('loginPass').value
-      })
-    });
-    state.token=d.token;
-    state.user=d.user;
-    localStorage.setItem('crm_token',state.token);
-    localStorage.setItem('crm_user',JSON.stringify(state.user));
-    boot()
-  }catch(e){
-    toast(e.message,true)
+
+  const errorBox =
+    $('loginError');
+
+  errorBox.textContent = '';
+
+  const username =
+    $('u').value.trim();
+
+  const password =
+    $('p').value;
+
+  if(!username || !password){
+
+    errorBox.textContent =
+      'Please enter username and password.';
+
+    return;
+
   }
+
+  try{
+
+    const data =
+      await api(
+        '/api/auth/login',
+        {
+          method:'POST',
+
+          body:JSON.stringify({
+            username,
+            password
+          })
+        }
+      );
+
+    S.token =
+      data.token;
+
+    S.user =
+      data.user;
+
+    localStorage.setItem(
+      'crm_token',
+      S.token
+    );
+
+    localStorage.setItem(
+      'crm_user',
+      JSON.stringify(S.user)
+    );
+
+    boot();
+
+  }catch(error){
+
+    errorBox.textContent =
+      error.message ||
+      'Login failed.';
+
+  }
+
 }
+
+
+/* =========================================================
+   LOGOUT
+========================================================= */
 
 function logout(){
-  localStorage.removeItem('crm_token');
-  localStorage.removeItem('crm_user');
-  location.reload()
+
+  localStorage.removeItem(
+    'crm_token'
+  );
+
+  localStorage.removeItem(
+    'crm_user'
+  );
+
+  location.reload();
+
 }
+
+
+/* =========================================================
+   BOOT
+========================================================= */
 
 function boot(){
-  if(!state.token)return;
+
+  if(!S.token){
+
+    $('login').classList.remove('hidden');
+
+    $('app').classList.add('hidden');
+
+    return;
+
+  }
+
   $('login').classList.add('hidden');
+
   $('app').classList.remove('hidden');
-  $('userName').textContent=state.user?.name||'';
-  $('avatar').textContent=(state.user?.name||'A')[0];
-  showPage('dashboard')
+
+  $('who').textContent =
+    S.user?.name ||
+    S.user?.username ||
+    '';
+
+  show('dashboard');
+
 }
 
-function showPage(p){
-  document.querySelectorAll('.nav button').forEach(x=>x.classList.remove('active'));
-  $('nav-'+p)?.classList.add('active');
-  $('pageTitle').textContent=p.charAt(0).toUpperCase()+p.slice(1);
-  ({
-    dashboard:dashboard,
-    patients:patients,
-    leads:leads,
-    appointments:appointments,
-    therapists:therapists,
-    rooms:rooms,
-    billing:billing,
-    reports:reports,
-    users:users
-  }[p]||dashboard)()
+
+/* =========================================================
+   ADMIN CHECK
+========================================================= */
+
+function admin(){
+
+  return [
+    'Admin',
+    'Super Admin',
+    'SUPER_ADMIN',
+    'Operations Head'
+  ].includes(
+    S.user?.role
+  );
+
 }
 
-function openModal(title,body){
-  $('modalTitle').textContent=title;
-  $('modalBody').innerHTML=body;
-  $('modal').classList.remove('hidden')
+
+/* =========================================================
+   NAVIGATION
+========================================================= */
+
+function show(page){
+
+  document
+    .querySelectorAll('.nav button')
+    .forEach(button =>
+      button.classList.remove('active')
+    );
+
+  const nav =
+    $('n-' + page);
+
+  if(nav){
+
+    nav.classList.add('active');
+
+  }
+
+  $('title').textContent =
+    page === 'approvals'
+      ? 'Price Approvals'
+      : page.charAt(0).toUpperCase()
+        + page.slice(1);
+
+  const pages = {
+
+    dashboard,
+    leads,
+    approvals,
+    reports,
+    packages,
+    users
+
+  };
+
+  if(pages[page]){
+
+    pages[page]();
+
+  }
+
 }
 
-function closeModal(){
-  $('modal').classList.add('hidden')
+
+/* =========================================================
+   MODAL
+========================================================= */
+
+function openM(title, html){
+
+  $('mt').textContent =
+    title || '';
+
+  $('mb').innerHTML =
+    html && String(html).trim()
+      ? html
+      : `
+        <div class="card">
+          <b>Unable to load this form.</b>
+          <p class="muted">
+            Please close this window and try again.
+          </p>
+        </div>
+      `;
+
+  $('modal').classList.remove('hidden');
+
 }
 
-function esc(v){
-  return String(v??'').replace(/[&<>"']/g,m=>({
-    '&':'&amp;',
-    '<':'&lt;',
-    '>':'&gt;',
-    '"':'&quot;',
-    "'":'&#39;'
-  }[m]))
+
+function closeM(){
+
+  $('modal').classList.add('hidden');
+
+  $('mt').textContent = '';
+
+  $('mb').innerHTML = '';
+
 }
 
-function table(rows,cols){
-  if(!rows?.length)return '<div class="empty">No records found.</div>';
-  return '<div class="tablewrap"><table class="table"><thead><tr>'+
-    cols.map(c=>'<th>'+esc(c.label)+'</th>').join('')+
-    '</tr></thead><tbody>'+
-    rows.map(r=>'<tr>'+
-      cols.map(c=>'<td>'+(
-        c.render?c.render(r):esc(r[c.key])
-      )+'</td>').join('')+
-    '</tr>').join('')+
-    '</tbody></table></div>'
+
+/* =========================================================
+   TABLE
+========================================================= */
+
+function tbl(rows, columns){
+
+  if(!rows || !rows.length){
+
+    return `
+      <div class="card">
+        No records found.
+      </div>
+    `;
+
+  }
+
+  return `
+    <div class="tablewrap">
+
+      <table class="table">
+
+        <thead>
+          <tr>
+            ${
+              columns
+                .map(c =>
+                  `<th>${c.l}</th>`
+                )
+                .join('')
+            }
+          </tr>
+        </thead>
+
+        <tbody>
+
+          ${
+            rows.map(row => `
+
+              <tr>
+
+                ${
+                  columns
+                    .map(c => `
+
+                      <td>
+                        ${
+                          c.r
+                            ? c.r(row)
+                            : esc(row[c.k])
+                        }
+                      </td>
+
+                    `)
+                    .join('')
+                }
+
+              </tr>
+
+            `).join('')
+          }
+
+        </tbody>
+
+      </table>
+
+    </div>
+  `;
+
 }
 
-function stat(title,val,sub){
-  return `<div class="card">
-    <div class="muted">${title}</div>
-    <div class="metric">${val}</div>
-    <div class="muted">${sub||''}</div>
-  </div>`
-}
+
+/* =========================================================
+   DASHBOARD
+========================================================= */
 
 async function dashboard(){
-  $('content').innerHTML=
-    '<div class="grid cards">'+
-    stat('Patients','…','Loading')+
-    stat('Active leads','…','Loading')+
-    stat("Today's appointments",'…','Loading')+
-    stat('Paid revenue','…','Loading')+
-    '</div>'+
-    '<div class="section"><div class="card"><h3>Welcome to Leelajani Ayur Care CRM</h3>'+
-    '<p class="muted">Use the navigation to manage patients, leads, scheduling, therapists, rooms, billing and reports.</p>'+
-    '</div></div>';
+
+  let data = {};
 
   try{
-    const d=await api('/api/reports/dashboard');
-    $('content').innerHTML=
-      '<div class="grid cards">'+
-      stat('Patients',d.patients,'Total registered')+
-      stat('Active leads',d.activeLeads,'Open pipeline')+
-      stat("Today's appointments",d.todayAppointments,'Scheduled today')+
-      stat('Paid revenue','₹'+Number(d.revenue||0).toLocaleString('en-IN'),'Recorded paid invoices')+
-      stat('Active users',d.activeUsers,'System users')+
-      '</div>'+
-      '<div class="section"><div class="sectionhead"><h3>Quick actions</h3></div>'+
-      '<div class="grid cards">'+
-      '<button class="card" onclick="newPatient()">Add patient</button>'+
-      '<button class="card" onclick="newLead()">Add lead</button>'+
-      '<button class="card" onclick="newAppointment()">New appointment</button>'+
-      '<button class="card" onclick="newInvoice()">New invoice</button>'+
-      '</div></div>'
-  }catch(e){
-    toast(e.message,true)
-  }
-}
 
-async function patients(){
-  let rows=[];
-  try{
-    rows=await api('/api/patients');
-    state.cache.patients=rows
-  }catch(e){
-    toast(e.message,true)
+    data =
+      await api(
+        '/api/reports/dashboard'
+      );
+
+  }catch(error){
+
+    console.warn(
+      'Dashboard API:',
+      error.message
+    );
+
   }
 
-  $('content').innerHTML=
-    '<div class="toolbar">'+
-    '<input id="patientSearch" placeholder="Search name, phone or code..." oninput="filterPatients()">'+
-    '<button class="btn gold" onclick="newPatient()">+ Add patient</button>'+
-    '<button class="btn light" onclick="downloadCSV(\'patients\')">Export CSV</button>'+
-    '</div><div id="patientTable"></div>';
+  $('content').innerHTML = `
 
-  renderPatients(rows)
+    <div class="cards">
+
+      <div class="card">
+
+        <div class="muted">
+          Active Leads
+        </div>
+
+        <div class="metric">
+          ${data.activeLeads ?? '—'}
+        </div>
+
+      </div>
+
+
+      <div class="card">
+
+        <div class="muted">
+          Converted
+        </div>
+
+        <div class="metric">
+          ${data.convertedLeads ?? '—'}
+        </div>
+
+      </div>
+
+
+      <div class="card">
+
+        <div class="muted">
+          Closed Revenue
+        </div>
+
+        <div class="metric">
+          ₹${Number(
+            data.revenue || 0
+          ).toLocaleString('en-IN')}
+        </div>
+
+      </div>
+
+
+      <div class="card">
+
+        <div class="muted">
+          Your Role
+        </div>
+
+        <div
+          class="metric"
+          style="font-size:18px">
+
+          ${esc(
+            S.user?.role || ''
+          )}
+
+        </div>
+
+      </div>
+
+    </div>
+
+
+    <div
+      class="card"
+      style="margin-top:15px">
+
+      <h3>
+        Leelajani Lead CRM
+      </h3>
+
+      <p class="muted">
+        Track lead ownership, campaigns,
+        packages, services, follow-ups,
+        conversion, revenue and
+        custom-price approvals.
+      </p>
+
+      <p class="muted">
+        Therapist and room-management
+        modules are not included.
+      </p>
+
+    </div>
+
+  `;
+
 }
 
-function renderPatients(rows){
-  $('patientTable').innerHTML=table(rows,[
-    {label:'Code',key:'patient_code'},
-    {label:'Patient',render:r=>esc((r.first_name||'')+' '+(r.last_name||''))},
-    {label:'Phone',key:'phone'},
-    {label:'Type',key:'patient_type'},
-    {label:'Status',render:r=>`<span class="badge">${esc(r.status)}</span>`},
-    {label:'Actions',render:r=>`<button class="btn light" onclick="editPatient(${r.id})">Edit</button>`}
-  ])
-}
 
-function filterPatients(){
-  const q=$('patientSearch').value.toLowerCase();
-  renderPatients((state.cache.patients||[]).filter(r=>
-    JSON.stringify(r).toLowerCase().includes(q)
-  ))
-}
-
-function patientForm(r={}){
-  return `<div class="formgrid">
-  <div class="field"><label>First name *</label><input id="pf_first_name" value="${esc(r.first_name)}"></div>
-  <div class="field"><label>Last name</label><input id="pf_last_name" value="${esc(r.last_name)}"></div>
-  <div class="field"><label>Phone</label><input id="pf_phone" value="${esc(r.phone)}"></div>
-  <div class="field"><label>Email</label><input id="pf_email" value="${esc(r.email)}"></div>
-  <div class="field"><label>Date of birth</label><input id="pf_dob" type="date" value="${esc(r.dob?.slice?.(0,10)||'')}"></div>
-  <div class="field"><label>Gender</label>
-    <select id="pf_gender">
-      <option value="">Select</option>
-      <option ${r.gender==='Male'?'selected':''}>Male</option>
-      <option ${r.gender==='Female'?'selected':''}>Female</option>
-      <option ${r.gender==='Other'?'selected':''}>Other</option>
-    </select>
-  </div>
-  <div class="field"><label>Patient type</label>
-    <select id="pf_patient_type">
-      <option ${r.patient_type==='Normal'||!r.patient_type?'selected':''}>Normal</option>
-      <option ${r.patient_type==='VIP'?'selected':''}>VIP</option>
-      <option ${r.patient_type==='Package'?'selected':''}>Package</option>
-    </select>
-  </div>
-  <div class="field"><label>Status</label>
-    <select id="pf_status">
-      <option>New</option>
-      <option>Active</option>
-      <option>Follow-up</option>
-      <option>Completed</option>
-      <option>Inactive</option>
-    </select>
-  </div>
-  <div class="field"><label>Prakriti</label><input id="pf_prakriti" value="${esc(r.prakriti)}"></div>
-  <div class="field"><label>Vikriti</label><input id="pf_vikriti" value="${esc(r.vikriti)}"></div>
-  <div class="field"><label>Blood group</label><input id="pf_blood_group" value="${esc(r.blood_group)}"></div>
-  <div class="field"><label>Occupation</label><input id="pf_occupation" value="${esc(r.occupation)}"></div>
-  <div class="field"><label>Emergency contact</label><input id="pf_emergency_name" value="${esc(r.emergency_name)}"></div>
-  <div class="field"><label>Emergency phone</label><input id="pf_emergency_phone" value="${esc(r.emergency_phone)}"></div>
-  <div class="field full"><label>Address</label><textarea id="pf_address">${esc(r.address)}</textarea></div>
-  <div class="field full"><label>Allergies / medical history</label><textarea id="pf_allergies">${esc(r.allergies||r.past_history)}</textarea></div>
-  <div class="field full"><label>Medications / known conditions</label><textarea id="pf_medications">${esc(r.medications||r.known_conditions)}</textarea></div>
-  </div>
-  <div style="margin-top:18px;text-align:right">
-    <button class="btn" onclick="savePatient(${r.id||'null'})">Save patient</button>
-  </div>`
-}
-
-function newPatient(){
-  openModal('Add patient',patientForm())
-}
-
-function editPatient(id){
-  const r=(state.cache.patients||[]).find(x=>x.id==id);
-  openModal('Edit patient',patientForm(r))
-}
-
-async function savePatient(id){
-  const g=k=>$('pf_'+k).value;
-  const b={
-    first_name:g('first_name'),
-    last_name:g('last_name'),
-    phone:g('phone'),
-    email:g('email'),
-    dob:g('dob')||null,
-    gender:g('gender'),
-    patient_type:g('patient_type'),
-    status:g('status'),
-    prakriti:g('prakriti'),
-    vikriti:g('vikriti'),
-    blood_group:g('blood_group'),
-    occupation:g('occupation'),
-    emergency_name:g('emergency_name'),
-    emergency_phone:g('emergency_phone'),
-    address:g('address'),
-    allergies:g('allergies'),
-    past_history:g('allergies'),
-    medications:g('medications'),
-    known_conditions:g('medications')
-  };
-
-  try{
-    await api(id?'/api/patients/'+id:'/api/patients',{
-      method:id?'PUT':'POST',
-      body:JSON.stringify(b)
-    });
-    closeModal();
-    toast('Patient saved');
-    patients()
-  }catch(e){
-    toast(e.message,true)
-  }
-}
+/* =========================================================
+   LEADS
+========================================================= */
 
 async function leads(){
-  let rows=[];
+
   try{
-    rows=await api('/api/leads');
-    state.cache.leads=rows
-  }catch(e){
-    toast(e.message,true)
+
+    S.leads =
+      await api('/api/leads');
+
+  }catch(error){
+
+    console.error(error);
+
+    S.leads = [];
+
   }
 
-  $('content').innerHTML=
-    '<div class="toolbar">'+
-    '<input id="leadSearch" placeholder="Search leads..." oninput="filterLeads()">'+
-    '<button class="btn gold" onclick="newLead()">+ Add lead</button>'+
-    '<button class="btn light" onclick="downloadCSV(\'leads\')">Export CSV</button>'+
-    '</div><div id="leadTable"></div>';
+  $('content').innerHTML = `
 
-  renderLeads(rows)
+    <div class="toolbar">
+
+      <input
+        class="grow"
+        id="q"
+        placeholder="Search leads..."
+        oninput="flt()">
+
+
+      <select
+        id="st"
+        onchange="flt()">
+
+        <option value="">
+          All statuses
+        </option>
+
+        ${
+          [
+            'New',
+            'Contacted',
+            'Interested',
+            'Follow-up Required',
+            'Appointment Booked',
+            'Consultation Completed',
+            'Treatment Booked',
+            'Converted',
+            'Not Interested',
+            'No Response',
+            'On Hold',
+            'Lost',
+            'Duplicate'
+          ]
+          .map(status =>
+            `<option>${status}</option>`
+          )
+          .join('')
+        }
+
+      </select>
+
+
+      <button
+        class="btn gold"
+        onclick="newLead()">
+
+        + Add Lead
+
+      </button>
+
+    </div>
+
+
+    <div id="lt"></div>
+
+  `;
+
+  render(S.leads);
+
 }
 
-function renderLeads(rows){
-  $('leadTable').innerHTML=table(rows,[
-    {label:'Code',key:'lead_code'},
-    {label:'Name',key:'name'},
-    {label:'Phone',key:'phone'},
-    {label:'Source',key:'source'},
-    {label:'Status',render:r=>`<span class="badge">${esc(r.status)}</span>`},
-    {label:'Follow-up',key:'follow_up_date'},
-    {label:'Owner',key:'owner_name'},
-    {label:'Actions',render:r=>`<button class="btn light" onclick="editLead(${r.id})">Edit</button>`}
-  ])
+
+function flt(){
+
+  const query =
+    ($('q')?.value || '')
+      .toLowerCase();
+
+  const status =
+    $('st')?.value || '';
+
+  const filtered =
+    S.leads.filter(row => {
+
+      const matchesSearch =
+        !query ||
+        JSON.stringify(row)
+          .toLowerCase()
+          .includes(query);
+
+      const matchesStatus =
+        !status ||
+        row.status === status;
+
+      return (
+        matchesSearch &&
+        matchesStatus
+      );
+
+    });
+
+  render(filtered);
+
 }
 
-function filterLeads(){
-  const q=$('leadSearch').value.toLowerCase();
-  renderLeads((state.cache.leads||[]).filter(r=>
-    JSON.stringify(r).toLowerCase().includes(q)
-  ))
+
+/* =========================================================
+   LEAD TABLE
+========================================================= */
+
+function render(rows){
+
+  $('lt').innerHTML =
+    tbl(
+      rows,
+      [
+
+        {
+          l:'Lead',
+          k:'name'
+        },
+
+        {
+          l:'Phone',
+          k:'phone'
+        },
+
+        {
+          l:'Source',
+          k:'source'
+        },
+
+        {
+          l:'Campaign',
+          r:r =>
+            esc(
+              r.campaign || '—'
+            )
+        },
+
+        {
+          l:'Service',
+          r:r =>
+            esc(
+              r.service ||
+              r.package_name ||
+              '—'
+            )
+        },
+
+        {
+          l:'Status',
+          k:'status'
+        },
+
+        {
+          l:'Owner',
+          k:'owner_name'
+        },
+
+        {
+          l:'Last Updated',
+          r:r =>
+            esc(
+              r.updated_at ||
+              r.last_updated ||
+              '—'
+            )
+        },
+
+        {
+          l:'Updated By',
+          r:r =>
+            esc(
+              r.updated_by_name ||
+              '—'
+            )
+        },
+
+        {
+          l:'Action',
+          r:r => `
+
+            <button
+              class="btn light"
+              onclick="editLead(${r.id})">
+
+              Edit
+
+            </button>
+
+            ${
+              admin()
+                ? `
+                  <button
+                    class="btn light"
+                    onclick="transfer(${r.id})">
+
+                    Transfer
+
+                  </button>
+                `
+                : ''
+            }
+
+          `
+        }
+
+      ]
+    );
+
 }
 
-function leadForm(r={}){
-  return `<div class="formgrid">
-  <div class="field"><label>Name *</label><input id="lf_name" value="${esc(r.name)}"></div>
-  <div class="field"><label>Phone</label><input id="lf_phone" value="${esc(r.phone)}"></div>
-  <div class="field"><label>Email</label><input id="lf_email" value="${esc(r.email)}"></div>
-  <div class="field"><label>Source</label>
-    <select id="lf_source">
-      <option>Website</option>
-      <option>WhatsApp</option>
-      <option>Instagram</option>
-      <option>Facebook</option>
-      <option>Google</option>
-      <option>Referral</option>
-      <option>Walk-in</option>
-      <option>Other</option>
-    </select>
-  </div>
-  <div class="field"><label>Status</label>
-    <select id="lf_status">
-      <option>New</option>
-      <option>Contacted</option>
-      <option>Qualified</option>
-      <option>Converted</option>
-      <option>Lost</option>
-      <option>Cold</option>
-    </select>
-  </div>
-  <div class="field"><label>Follow-up date</label><input id="lf_follow_up_date" type="date" value="${esc(r.follow_up_date?.slice?.(0,10)||'')}"></div>
-  <div class="field"><label>Follow-up time</label><input id="lf_follow_up_time" type="time" value="${esc(r.follow_up_time||'')}"></div>
-  <div class="field"><label>Follow-up type</label>
-    <select id="lf_follow_up_type">
-      <option>Call</option>
-      <option>WhatsApp</option>
-      <option>Visit</option>
-      <option>Consultation</option>
-    </select>
-  </div>
-  <div class="field full"><label>Follow-up note</label><textarea id="lf_follow_up_note">${esc(r.follow_up_note)}</textarea></div>
-  </div>
-  <div style="margin-top:18px;text-align:right">
-    <button class="btn" onclick="saveLead(${r.id||'null'})">Save lead</button>
-  </div>`
-}
+
+/* =========================================================
+   NEW / EDIT LEAD
+========================================================= */
 
 function newLead(){
-  openModal('Add lead',leadForm())
+
+  editLead(null);
+
 }
+
 
 function editLead(id){
-  openModal('Edit lead',leadForm((state.cache.leads||[]).find(x=>x.id==id)||{}))
+
+  const row =
+    S.leads.find(
+      x => x.id == id
+    ) || {};
+
+  const statuses = [
+
+    'New',
+    'Contacted',
+    'Interested',
+    'Follow-up Required',
+    'Appointment Booked',
+    'Consultation Completed',
+    'Treatment Booked',
+    'Converted',
+    'Not Interested',
+    'No Response',
+    'On Hold',
+    'Lost',
+    'Duplicate'
+
+  ];
+
+  openM(
+    id
+      ? 'Edit Lead'
+      : 'Add Lead',
+
+    `
+
+    <div class="formgrid">
+
+
+      <div class="field">
+
+        <label>
+          Name *
+        </label>
+
+        <input
+          id="ln"
+          value="${esc(row.name)}">
+
+      </div>
+
+
+      <div class="field">
+
+        <label>
+          Mobile *
+        </label>
+
+        <input
+          id="lp"
+          value="${esc(row.phone)}">
+
+      </div>
+
+
+      <div class="field">
+
+        <label>
+          Source
+        </label>
+
+        <input
+          id="ls"
+          value="${esc(
+            row.source || ''
+          )}">
+
+      </div>
+
+
+      <div class="field">
+
+        <label>
+          Campaign / Tag
+        </label>
+
+        <input
+          id="lc"
+          placeholder="Ojaswini Campaign / Karkidakam / Postnatal..."
+          value="${esc(
+            row.campaign || ''
+          )}">
+
+      </div>
+
+
+      <div class="field">
+
+        <label>
+          Service / Package
+        </label>
+
+        <input
+          id="lv"
+          value="${esc(
+            row.service ||
+            row.package_name ||
+            ''
+          )}">
+
+      </div>
+
+
+      <div class="field">
+
+        <label>
+          Status
+        </label>
+
+        <select id="lx">
+
+          ${
+            statuses
+              .map(
+                status => `
+
+                  <option
+                    ${
+                      row.status === status
+                        ? 'selected'
+                        : ''
+                    }>
+
+                    ${status}
+
+                  </option>
+
+                `
+              )
+              .join('')
+          }
+
+        </select>
+
+      </div>
+
+
+      <div class="field">
+
+        <label>
+          Follow-up Date
+        </label>
+
+        <input
+          id="ld"
+          type="date"
+          value="${esc(
+            String(
+              row.follow_up_date || ''
+            ).slice(0,10)
+          )}">
+
+      </div>
+
+
+      <div class="field">
+
+        <label>
+          Follow-up Time
+        </label>
+
+        <input
+          id="ltm"
+          type="time"
+          value="${esc(
+            row.follow_up_time || ''
+          )}">
+
+      </div>
+
+
+      <div class="field">
+
+        <label>
+          Custom / Proposed Price
+        </label>
+
+        <input
+          id="lpr"
+          type="number"
+          min="0"
+          value="${esc(
+            row.custom_price ||
+            row.closed_amount ||
+            ''
+          )}">
+
+      </div>
+
+
+      <div class="field">
+
+        <label>
+          Payment Mode
+        </label>
+
+        <select id="lpm">
+
+          <option>Pending</option>
+          <option>UPI / GPay</option>
+          <option>Bank Transfer</option>
+          <option>Cash</option>
+          <option>Card</option>
+
+        </select>
+
+      </div>
+
+
+      <div class="field full">
+
+        <label>
+          Payment Proof
+        </label>
+
+        <input
+          id="paymentProof"
+          type="file"
+          accept="image/*,.pdf">
+
+        <p class="muted">
+          GPay screenshot, bank screenshot
+          or receipt can be attached.
+        </p>
+
+      </div>
+
+
+      <div class="field full">
+
+        <label>
+          Notes
+        </label>
+
+        <textarea
+          id="lnote">${esc(
+            row.notes ||
+            row.follow_up_note ||
+            ''
+          )}</textarea>
+
+      </div>
+
+    </div>
+
+
+    <div class="card">
+
+      <b>
+        Custom Price Approval
+      </b>
+
+      <p class="muted">
+        If a sales executive enters a
+        custom price, it must be approved
+        by a Super Admin before the lead
+        can be treated as an approved
+        conversion.
+      </p>
+
+    </div>
+
+
+    <br>
+
+
+    <button
+      class="btn gold"
+      onclick="saveLead(${id || 'null'})">
+
+      Save Lead
+
+    </button>
+
+    `
+  );
+
 }
+
+
+/* =========================================================
+   SAVE LEAD
+========================================================= */
 
 async function saveLead(id){
-  const g=k=>$('lf_'+k).value;
-  const b={
-    name:g('name'),
-    phone:g('phone'),
-    email:g('email'),
-    source:g('source'),
-    status:g('status'),
-    follow_up_date:g('follow_up_date')||null,
-    follow_up_time:g('follow_up_time')||null,
-    follow_up_type:g('follow_up_type'),
-    follow_up_note:g('follow_up_note')
+
+  const price =
+    $('lpr').value
+      ? Number($('lpr').value)
+      : null;
+
+  const body = {
+
+    name:
+      $('ln').value.trim(),
+
+    phone:
+      $('lp').value.trim(),
+
+    source:
+      $('ls').value.trim(),
+
+    campaign:
+      $('lc').value.trim(),
+
+    service:
+      $('lv').value.trim(),
+
+    status:
+      $('lx').value,
+
+    follow_up_date:
+      $('ld').value || null,
+
+    follow_up_time:
+      $('ltm').value || null,
+
+    custom_price:
+      price,
+
+    payment_method:
+      $('lpm').value,
+
+    notes:
+      $('lnote').value.trim()
+
   };
 
-  try{
-    await api(id?'/api/leads/'+id:'/api/leads',{
-      method:id?'PUT':'POST',
-      body:JSON.stringify(b)
-    });
-    closeModal();
-    toast('Lead saved');
-    leads()
-  }catch(e){
-    toast(e.message,true)
-  }
-}
+  if(!body.name){
 
-async function appointments(){
-  let rows=[];
-  try{
-    rows=await api('/api/appointments');
-    state.cache.appointments=rows
-  }catch(e){
-    toast(e.message,true)
+    alert(
+      'Lead name is required.'
+    );
+
+    return;
+
   }
 
-  $('content').innerHTML=
-    '<div class="toolbar">'+
-    '<input id="apptDate" type="date" onchange="loadApptDate">'+
-    '<button class="btn gold" onclick="newAppointment()">+ New appointment</button>'+
-    '<button class="btn light" onclick="downloadCSV(\'appointments\')">Export CSV</button>'+
-    '</div><div id="apptTable"></div>';
-
-  renderAppointments(rows)
-}
-
-function renderAppointments(rows){
-  $('apptTable').innerHTML=table(rows,[
-    {label:'Date',key:'date'},
-    {label:'Time',render:r=>String(r.start_time||'').slice(0,5)},
-    {label:'Patient',render:r=>esc((r.first_name||'')+' '+(r.last_name||''))},
-    {label:'Therapy',key:'therapy_name'},
-    {label:'Therapist',key:'therapist_name'},
-    {label:'Room',key:'room_name'},
-    {label:'Status',render:r=>`<span class="badge">${esc(r.status)}</span>`}
-  ])
-}
-
-async function loadApptDate(){
-  const d=$('apptDate').value;
-  if(!d)return;
   try{
-    renderAppointments(await api('/api/appointments?date='+encodeURIComponent(d)))
-  }catch(e){
-    toast(e.message,true)
-  }
-}
 
-async function newAppointment(){
-  let patients=[],therapists=[],rooms=[],therapies=[];
+    await api(
+      id
+        ? '/api/leads/' + id
+        : '/api/leads',
+      {
+        method:
+          id
+            ? 'PUT'
+            : 'POST',
 
-  try{
-    [patients,therapists,rooms,therapies]=await Promise.all([
-      api('/api/patients'),
-      api('/api/therapists'),
-      api('/api/rooms'),
-      api('/api/therapies')
-    ]);
+        body:
+          JSON.stringify(body)
+      }
+    );
 
-    state.cache={...state.cache,patients,therapists,rooms,therapies}
-  }catch(e){
-    toast(e.message,true)
+    closeM();
+
+    await leads();
+
+  }catch(error){
+
+    alert(
+      error.message
+    );
+
   }
 
-  openModal('New appointment',`
-  <div class="formgrid">
-  <div class="field"><label>Patient *</label>
-    <select id="af_patient_id">
-      <option value="">Select</option>
-      ${patients.map(x=>`<option value="${x.id}">${esc(x.patient_code+' - '+x.first_name+' '+(x.last_name||''))}</option>`).join('')}
-    </select>
-  </div>
-
-  <div class="field"><label>Date *</label>
-    <input id="af_date" type="date" value="${new Date().toISOString().slice(0,10)}">
-  </div>
-
-  <div class="field"><label>Start time *</label>
-    <input id="af_start_time" type="time">
-  </div>
-
-  <div class="field"><label>Duration (minutes)</label>
-    <input id="af_duration_min" type="number" value="60">
-  </div>
-
-  <div class="field"><label>Therapy</label>
-    <select id="af_therapy_id">
-      <option value="">Select</option>
-      ${therapies.map(x=>`<option value="${x.id}">${esc(x.name)}</option>`).join('')}
-    </select>
-  </div>
-
-  <div class="field"><label>Therapist</label>
-    <select id="af_therapist_id">
-      <option value="">Select</option>
-      ${therapists.map(x=>`<option value="${x.id}">${esc(x.name)} (${esc(x.gender||'')})</option>`).join('')}
-    </select>
-  </div>
-
-  <div class="field"><label>Room</label>
-    <select id="af_room_id">
-      <option value="">Select</option>
-      ${rooms.map(x=>`<option value="${x.id}">${esc(x.name)}${x.steam?' — Steam':''}</option>`).join('')}
-    </select>
-  </div>
-
-  <div class="field"><label>Type</label>
-    <select id="af_appointment_type">
-      <option>Therapy</option>
-      <option>Consultation</option>
-      <option>Follow-up</option>
-      <option>Package</option>
-    </select>
-  </div>
-
-  <div class="field full"><label>Notes</label>
-    <textarea id="af_notes"></textarea>
-  </div>
-  </div>
-
-  <div style="margin-top:18px;text-align:right">
-    <button class="btn" onclick="saveAppointment()">Create appointment</button>
-  </div>`)
 }
 
-async function saveAppointment(){
-  const g=k=>$('af_'+k).value;
 
-  const b={
-    patient_id:g('patient_id'),
-    date:g('date'),
-    start_time:g('start_time'),
-    duration_min:Number(g('duration_min')),
-    therapy_id:g('therapy_id')||null,
-    therapist_id:g('therapist_id')||null,
-    room_id:g('room_id')||null,
-    appointment_type:g('appointment_type'),
-    notes:g('notes')
-  };
+/* =========================================================
+   TRANSFER LEAD
+========================================================= */
 
-  try{
-    await api('/api/appointments',{
-      method:'POST',
-      body:JSON.stringify(b)
-    });
-    closeModal();
-    toast('Appointment created');
-    appointments()
-  }catch(e){
-    toast(e.message,true)
-  }
-}
+function transfer(id){
 
-async function therapists(){
-  try{
-    const rows=await api('/api/therapists');
-    state.cache.therapists=rows;
+  if(!admin()){
 
-    $('content').innerHTML=
-      '<div class="toolbar">'+
-      '<button class="btn light" onclick="showPage(\'appointments\')">View schedule</button>'+
-      '</div>'+
-      table(rows,[
-        {label:'Name',key:'name'},
-        {label:'Gender',key:'gender'},
-        {label:'Phone',key:'phone'},
-        {label:'Active',render:r=>r.active?'<span class="badge ok">Active</span>':'<span class="badge red">Inactive</span>'}
-      ])
-  }catch(e){
-    toast(e.message,true)
-  }
-}
+    alert(
+      'Only Super Admin can transfer leads.'
+    );
 
-async function rooms(){
-  try{
-    const rows=await api('/api/rooms');
+    return;
 
-    $('content').innerHTML=table(rows,[
-      {label:'Room',key:'name'},
-      {label:'Steam',render:r=>r.steam?'<span class="badge ok">Available</span>':'<span class="badge warn">No steam</span>'},
-      {label:'Active',render:r=>r.active?'<span class="badge ok">Active</span>':'<span class="badge red">Inactive</span>'}
-    ])
-  }catch(e){
-    toast(e.message,true)
-  }
-}
-
-async function billing(){
-  let rows=[];
-
-  try{
-    rows=await api('/api/invoices');
-    state.cache.invoices=rows
-  }catch(e){
-    toast(e.message,true)
   }
 
-  $('content').innerHTML=
-    '<div class="toolbar">'+
-    '<button class="btn gold" onclick="newInvoice()">+ New invoice</button>'+
-    '<button class="btn light" onclick="downloadCSV(\'invoices\')">Export CSV</button>'+
-    '</div>'+
-    table(rows,[
-      {label:'Invoice',key:'invoice_no'},
-      {label:'Date',render:r=>String(r.invoice_date||'').slice(0,10)},
-      {label:'Patient',render:r=>esc((r.first_name||'')+' '+(r.last_name||''))},
-      {label:'Status',render:r=>`<span class="badge">${esc(r.status)}</span>`},
-      {label:'Total',render:r=>'₹'+Number(r.total||0).toLocaleString('en-IN')},
-      {label:'Payment',key:'payment_method'}
-    ])
+  openM(
+    'Transfer Lead',
+
+    `
+
+      <div class="field">
+
+        <label>
+          New Owner
+        </label>
+
+        <select id="to">
+
+          <option>
+            Preshna
+          </option>
+
+          <option>
+            Dr. Pooja
+          </option>
+
+          <option>
+            Akhila
+          </option>
+
+          <option>
+            Gokul
+          </option>
+
+        </select>
+
+      </div>
+
+
+      <div class="field">
+
+        <label>
+          Reason
+        </label>
+
+        <textarea id="tr"></textarea>
+
+      </div>
+
+
+      <button
+        class="btn gold"
+        onclick="doTransfer(${id})">
+
+        Transfer
+
+      </button>
+
+    `
+  );
+
 }
 
-async function newInvoice(){
-  let patients=[];
+
+async function doTransfer(id){
 
   try{
-    patients=await api('/api/patients')
-  }catch(e){}
 
-  openModal('New invoice',`
-  <div class="formgrid">
-  <div class="field"><label>Patient</label>
-    <select id="if_patient_id">
-      <option value="">Select</option>
-      ${patients.map(x=>`<option value="${x.id}">${esc(x.first_name+' '+(x.last_name||''))}</option>`).join('')}
-    </select>
-  </div>
+    await api(
+      '/api/leads/' +
+      id +
+      '/transfer',
+      {
+        method:'POST',
 
-  <div class="field"><label>Payment method</label>
-    <select id="if_payment_method">
-      <option>Cash</option>
-      <option>Bank Transfer</option>
-      <option>UPI</option>
-      <option>Card</option>
-      <option>Cheque</option>
-      <option>Pending</option>
-    </select>
-  </div>
+        body:
+          JSON.stringify({
 
-  <div class="field"><label>Description</label>
-    <input id="if_desc" value="Ayurvedic treatment">
-  </div>
+            owner_name:
+              $('to').value,
 
-  <div class="field"><label>Quantity</label>
-    <input id="if_qty" type="number" value="1">
-  </div>
+            reason:
+              $('tr').value
 
-  <div class="field"><label>Unit price</label>
-    <input id="if_price" type="number" value="0">
-  </div>
+          })
 
-  <div class="field"><label>GST %</label>
-    <input id="if_gst" type="number" value="0">
-  </div>
+      }
+    );
 
-  <div class="field"><label>Status</label>
-    <select id="if_status">
-      <option>Pending</option>
-      <option>Paid</option>
-    </select>
-  </div>
-  </div>
+    closeM();
 
-  <div style="margin-top:18px;text-align:right">
-    <button class="btn" onclick="saveInvoice()">Create invoice</button>
-  </div>`)
-}
+    await leads();
 
-async function saveInvoice(){
-  const g=k=>$('if_'+k).value;
+  }catch(error){
 
-  const b={
-    patient_id:g('patient_id')||null,
-    payment_method:g('payment_method'),
-    status:g('status'),
-    items:[{
-      description:g('desc'),
-      quantity:Number(g('qty')),
-      unit_price:Number(g('price')),
-      gst:Number(g('gst'))
-    }]
-  };
+    alert(
+      error.message
+    );
 
-  try{
-    await api('/api/invoices',{
-      method:'POST',
-      body:JSON.stringify(b)
-    });
-    closeModal();
-    toast('Invoice created');
-    billing()
-  }catch(e){
-    toast(e.message,true)
   }
+
 }
+
+
+/* =========================================================
+   APPROVALS
+========================================================= */
+
+async function approvals(){
+
+  if(!admin()){
+
+    $('content').innerHTML = `
+
+      <div class="card">
+
+        <h3>
+          Access Restricted
+        </h3>
+
+        <p class="muted">
+          Super Admin access is required.
+        </p>
+
+      </div>
+
+    `;
+
+    return;
+
+  }
+
+  let rows = [];
+
+  try{
+
+    rows =
+      await api(
+        '/api/lead-price-approvals'
+      );
+
+  }catch(error){
+
+    console.warn(error);
+
+  }
+
+  $('content').innerHTML = `
+
+    <div class="card">
+
+      <h3>
+        Pending Custom Price Approvals
+      </h3>
+
+      <div id="ap"></div>
+
+    </div>
+
+  `;
+
+  $('ap').innerHTML =
+    tbl(
+      rows,
+      [
+
+        {
+          l:'Lead',
+          k:'lead_name'
+        },
+
+        {
+          l:'Service',
+          k:'service_name'
+        },
+
+        {
+          l:'Standard',
+          r:x =>
+            '₹' +
+            Number(
+              x.standard_price || 0
+            ).toLocaleString('en-IN')
+        },
+
+        {
+          l:'Proposed',
+          r:x =>
+            '₹' +
+            Number(
+              x.proposed_price || 0
+            ).toLocaleString('en-IN')
+        },
+
+        {
+          l:'Requested By',
+          k:'requested_by'
+        },
+
+        {
+          l:'Action',
+          r:x => `
+
+            <button
+              class="btn gold"
+              onclick="approve(${x.id})">
+
+              Approve
+
+            </button>
+
+          `
+        }
+
+      ]
+    );
+
+}
+
+
+async function approve(id){
+
+  try{
+
+    await api(
+      '/api/lead-price-approvals/' +
+      id +
+      '/approve',
+      {
+        method:'POST'
+      }
+    );
+
+    await approvals();
+
+  }catch(error){
+
+    alert(
+      error.message
+    );
+
+  }
+
+}
+
+
+/* =========================================================
+   PACKAGES
+========================================================= */
+
+function packages(){
+
+  if(!admin()){
+
+    $('content').innerHTML = `
+
+      <div class="card">
+
+        <h3>
+          Access Restricted
+        </h3>
+
+        <p class="muted">
+          Super Admin access is required.
+        </p>
+
+      </div>
+
+    `;
+
+    return;
+
+  }
+
+  $('content').innerHTML = `
+
+    <div class="toolbar">
+
+      <button
+        class="btn gold"
+        onclick="addPackage()">
+
+        + Add Package
+
+      </button>
+
+    </div>
+
+    ${tbl(
+      S.packages,
+      [
+
+        {
+          l:'Package',
+          k:'name'
+        },
+
+        {
+          l:'Category',
+          k:'category'
+        },
+
+        {
+          l:'Default Price',
+          r:x =>
+            '₹' +
+            Number(
+              x.price || 0
+            ).toLocaleString('en-IN')
+        }
+
+      ]
+    )}
+
+  `;
+
+}
+
+
+function addPackage(){
+
+  openM(
+    'Add Package',
+
+    `
+
+      <div class="formgrid">
+
+        <div class="field">
+
+          <label>
+            Package Name
+          </label>
+
+          <input id="pn">
+
+        </div>
+
+
+        <div class="field">
+
+          <label>
+            Category
+          </label>
+
+          <input id="pc">
+
+        </div>
+
+
+        <div class="field">
+
+          <label>
+            Default Price
+          </label>
+
+          <input
+            id="pp"
+            type="number"
+            min="0">
+
+        </div>
+
+      </div>
+
+
+      <button
+        class="btn gold"
+        onclick="savePackage()">
+
+        Save Package
+
+      </button>
+
+    `
+  );
+
+}
+
+
+function savePackage(){
+
+  const name =
+    $('pn').value.trim();
+
+  if(!name){
+
+    alert(
+      'Package name is required.'
+    );
+
+    return;
+
+  }
+
+  S.packages.push({
+
+    name,
+
+    category:
+      $('pc').value.trim(),
+
+    price:
+      Number(
+        $('pp').value || 0
+      )
+
+  });
+
+  localStorage.setItem(
+    'crm_packages',
+    JSON.stringify(
+      S.packages
+    )
+  );
+
+  closeM();
+
+  packages();
+
+}
+
+
+/* =========================================================
+   REPORTS
+========================================================= */
 
 async function reports(){
-  let d={};
+
+  let data = {};
 
   try{
-    d=await api('/api/reports/dashboard')
-  }catch(e){}
 
-  $('content').innerHTML=
-    '<div class="grid cards">'+
-    stat('Patients',d.patients||0,'')+
-    stat('Open leads',d.activeLeads||0,'')+
-    stat('Today appointments',d.todayAppointments||0,'')+
-    stat('Revenue','₹'+Number(d.revenue||0).toLocaleString('en-IN'),'Paid')+
-    '</div>'+
-    '<div class="section">'+
-    '<div class="sectionhead"><h3>Report exports</h3></div>'+
-    '<div class="card">'+
-    '<p class="muted">Download current data as CSV. These files can be opened in Excel and used for printing/PDF export.</p>'+
-    '<div class="toolbar">'+
-    '<button class="btn light" onclick="downloadCSV(\'patients\')">Patients CSV</button>'+
-    '<button class="btn light" onclick="downloadCSV(\'leads\')">Leads CSV</button>'+
-    '<button class="btn light" onclick="downloadCSV(\'appointments\')">Appointments CSV</button>'+
-    '<button class="btn light" onclick="downloadCSV(\'invoices\')">Invoices CSV</button>'+
-    '</div></div></div>'
+    data =
+      await api(
+        '/api/reports/dashboard'
+      );
+
+  }catch(error){
+
+    console.warn(error);
+
+  }
+
+  $('content').innerHTML = `
+
+    <div class="cards">
+
+      <div class="card">
+
+        <div class="muted">
+          Active Leads
+        </div>
+
+        <div class="metric">
+          ${data.activeLeads ?? '—'}
+        </div>
+
+      </div>
+
+
+      <div class="card">
+
+        <div class="muted">
+          Converted Leads
+        </div>
+
+        <div class="metric">
+          ${data.convertedLeads ?? '—'}
+        </div>
+
+      </div>
+
+
+      <div class="card">
+
+        <div class="muted">
+          Revenue
+        </div>
+
+        <div class="metric">
+          ₹${Number(
+            data.revenue || 0
+          ).toLocaleString('en-IN')}
+        </div>
+
+      </div>
+
+    </div>
+
+
+    <div
+      class="card"
+      style="margin-top:15px">
+
+      <h3>
+        Export
+      </h3>
+
+      <button
+        class="btn light"
+        onclick="download('leads')">
+
+        Download Leads CSV
+
+      </button>
+
+    </div>
+
+  `;
+
 }
+
+
+async function download(type){
+
+  try{
+
+    const response =
+      await fetch(
+        '/api/export/' +
+        type,
+        {
+          headers:{
+            Authorization:
+              'Bearer ' +
+              S.token
+          }
+        }
+      );
+
+    if(!response.ok){
+
+      throw new Error(
+        'Export failed'
+      );
+
+    }
+
+    const blob =
+      await response.blob();
+
+    const url =
+      URL.createObjectURL(
+        blob
+      );
+
+    const link =
+      document.createElement('a');
+
+    link.href = url;
+
+    link.download =
+      'leelajani-' +
+      type +
+      '.csv';
+
+    document.body.appendChild(
+      link
+    );
+
+    link.click();
+
+    link.remove();
+
+    URL.revokeObjectURL(
+      url
+    );
+
+  }catch(error){
+
+    alert(
+      error.message
+    );
+
+  }
+
+}
+
+
+/* =========================================================
+   USERS
+========================================================= */
 
 async function users(){
-  try{
-    const rows=await api('/api/users');
 
-    $('content').innerHTML=
-      '<div class="toolbar">'+
-      '<button class="btn gold" onclick="newUser()">+ Add user</button>'+
-      '</div>'+
-      table(rows,[
-        {label:'Name',key:'name'},
-        {label:'Username',key:'username'},
-        {label:'Role',key:'role'},
-        {label:'Active',render:r=>r.active?'<span class="badge ok">Active</span>':'<span class="badge red">Inactive</span>'}
-      ])
-  }catch(e){
-    toast(e.message,true)
+  if(!admin()){
+
+    $('content').innerHTML = `
+
+      <div class="card">
+
+        <h3>
+          Access Restricted
+        </h3>
+
+        <p class="muted">
+          Only Super Admin can manage users.
+        </p>
+
+      </div>
+
+    `;
+
+    return;
+
   }
+
+  let rows = [];
+
+  try{
+
+    rows =
+      await api(
+        '/api/users'
+      );
+
+  }catch(error){
+
+    console.warn(error);
+
+  }
+
+  $('content').innerHTML = `
+
+    <div class="toolbar">
+
+      <button
+        class="btn gold"
+        onclick="addUser()">
+
+        + Add User
+
+      </button>
+
+    </div>
+
+    ${
+      tbl(
+        rows,
+        [
+
+          {
+            l:'Name',
+            k:'name'
+          },
+
+          {
+            l:'Username',
+            k:'username'
+          },
+
+          {
+            l:'Role',
+            k:'role'
+          },
+
+          {
+            l:'Active',
+            r:x =>
+              x.active
+                ? 'Yes'
+                : 'No'
+          }
+
+        ]
+      )
+    }
+
+  `;
+
 }
 
-function newUser(){
-  openModal('Add user',`
-  <div class="formgrid">
-  <div class="field"><label>Name</label><input id="uf_name"></div>
-  <div class="field"><label>Username</label><input id="uf_username"></div>
-  <div class="field"><label>Password</label><input id="uf_password" type="password"></div>
-  <div class="field"><label>Role</label>
-    <select id="uf_role">
-      <option>Admin</option>
-      <option>Doctor</option>
-      <option>Therapist</option>
-      <option>Front Office</option>
-      <option>Marketing</option>
-    </select>
-  </div>
-  </div>
 
-  <div style="margin-top:18px;text-align:right">
-    <button class="btn" onclick="saveUser()">Create user</button>
-  </div>`)
+function addUser(){
+
+  openM(
+    'Add User',
+
+    `
+
+      <div class="formgrid">
+
+        <div class="field">
+
+          <label>
+            Name
+          </label>
+
+          <input id="un">
+
+        </div>
+
+
+        <div class="field">
+
+          <label>
+            Username
+          </label>
+
+          <input id="uu">
+
+        </div>
+
+
+        <div class="field">
+
+          <label>
+            Password
+          </label>
+
+          <input
+            id="up"
+            type="password">
+
+        </div>
+
+
+        <div class="field">
+
+          <label>
+            Role
+          </label>
+
+          <select id="ur">
+
+            <option>
+              Lead User
+            </option>
+
+            <option>
+              Super Admin
+            </option>
+
+          </select>
+
+        </div>
+
+      </div>
+
+
+      <button
+        class="btn gold"
+        onclick="saveUser()">
+
+        Create User
+
+      </button>
+
+    `
+  );
+
 }
+
 
 async function saveUser(){
-  const g=k=>$('uf_'+k).value;
 
   try{
-    await api('/api/users',{
-      method:'POST',
-      body:JSON.stringify({
-        name:g('name'),
-        username:g('username'),
-        password:g('password'),
-        role:g('role')
-      })
-    });
 
-    closeModal();
-    toast('User created');
-    users()
-  }catch(e){
-    toast(e.message,true)
+    await api(
+      '/api/users',
+      {
+        method:'POST',
+
+        body:
+          JSON.stringify({
+
+            name:
+              $('un').value.trim(),
+
+            username:
+              $('uu').value.trim(),
+
+            password:
+              $('up').value,
+
+            role:
+              $('ur').value
+
+          })
+
+      }
+    );
+
+    closeM();
+
+    await users();
+
+  }catch(error){
+
+    alert(
+      error.message
+    );
+
   }
+
 }
 
-async function downloadCSV(type){
-  try{
-    const r=await fetch('/api/export/'+type,{
-      headers:{Authorization:'Bearer '+state.token}
-    });
 
-    if(!r.ok)throw new Error('Export failed');
+/* =========================================================
+   ERROR HANDLING
+========================================================= */
 
-    const blob=await r.blob();
-    const a=document.createElement('a');
-    a.href=URL.createObjectURL(blob);
-    a.download='leelajani-'+type+'.csv';
-    a.click();
-    URL.revokeObjectURL(a.href)
-  }catch(e){
-    toast(e.message,true)
+window.addEventListener(
+  'error',
+  function(event){
+
+    console.error(
+      event.error ||
+      event.message
+    );
+
   }
+);
+
+
+/* =========================================================
+   MODAL ESCAPE KEY
+========================================================= */
+
+document.addEventListener(
+  'keydown',
+  function(event){
+
+    if(
+      event.key === 'Escape' &&
+      !$('modal').classList.contains('hidden')
+    ){
+
+      closeM();
+
+    }
+
+  }
+);
+
+
+/* =========================================================
+   START
+========================================================= */
+
+if(S.token){
+
+  boot();
+
+}else{
+
+  $('login').classList.remove(
+    'hidden'
+  );
+
+  $('app').classList.add(
+    'hidden'
+  );
+
 }
 
-if(state.token)boot();
 </script>
+
 </body>
 </html>
