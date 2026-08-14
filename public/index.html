@@ -1,180 +1,47 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+Done. I prepared the **full CRM frontend** as a single `index.html` that connects to your existing Render API/database.
 
-  <title>Leelajani Ayur Care CRM</title>
+[**Download the complete CRM index.html**](sandbox:/mnt/data/leelajani-crm-index.html)
 
-  <style>
-    * {
-      box-sizing: border-box;
-    }
+### Put it into GitHub
 
-    body {
-      margin: 0;
-      font-family: Arial, sans-serif;
-      background: #f5f7f6;
-      color: #18312d;
-    }
+In your repository:
 
-    .header {
-      background: #123c35;
-      color: white;
-      padding: 22px 30px;
-    }
+1. Open **`public/index.html`**
+2. Click **Edit**
+3. Select everything and delete it.
+4. Open the downloaded `leelajani-crm-index.html` on your computer.
+5. Press **Ctrl+A → Ctrl+C**
+6. Paste into GitHub with **Ctrl+V**
+7. Click **Commit changes** directly to `main`.
 
-    .header h1 {
-      margin: 0;
-      font-size: 25px;
-    }
+If the `public` folder does not exist, use:
 
-    .header p {
-      margin: 6px 0 0;
-      opacity: .8;
-    }
+**Add file → Create new file**
 
-    .container {
-      max-width: 1200px;
-      margin: 35px auto;
-      padding: 0 20px;
-    }
+and name it:
 
-    .status {
-      background: white;
-      border-radius: 12px;
-      padding: 25px;
-      box-shadow: 0 3px 15px rgba(0,0,0,.08);
-    }
+```text
+public/index.html
+```
 
-    .success {
-      color: #16803c;
-      font-weight: bold;
-    }
+### What this version includes
 
-    .cards {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-      gap: 18px;
-      margin-top: 25px;
-    }
+* 🔐 Login
+* 📊 Dashboard
+* 👤 Patients
+* 🎯 Leads & follow-ups
+* 📅 Appointments
+* 👨‍⚕️ Therapists
+* 🚪 Rooms / steam availability
+* ₹ Billing & invoices
+* 📈 Reports
+* 👥 User management
+* CSV exports
+* Real PostgreSQL/API connection
+* Therapist/room conflict checking
+* Steam-room validation
+* Mobile-responsive layout
 
-    .card {
-      background: white;
-      border-radius: 12px;
-      padding: 25px;
-      box-shadow: 0 3px 15px rgba(0,0,0,.07);
-    }
+**Important:** this is now connected to the backend we just got running, rather than being a static demo.
 
-    .card h3 {
-      margin-top: 0;
-    }
-
-    button {
-      background: #c99a3d;
-      color: white;
-      border: 0;
-      border-radius: 7px;
-      padding: 11px 18px;
-      cursor: pointer;
-    }
-  </style>
-</head>
-
-<body>
-
-  <header class="header">
-    <h1>Leelajani Ayur Care CRM</h1>
-    <p>Clinic Management System</p>
-  </header>
-
-  <main class="container">
-
-    <section class="status">
-      <h2>CRM is running</h2>
-
-      <p class="success">
-        ✓ Server connected successfully
-      </p>
-
-      <p>
-        The Leelajani Ayur Care CRM backend is live on Render.
-      </p>
-
-      <button onclick="checkHealth()">
-        Check Database
-      </button>
-
-      <p id="result"></p>
-    </section>
-
-    <section class="cards">
-
-      <div class="card">
-        <h3>Patients</h3>
-        <p>Patient records and history</p>
-      </div>
-
-      <div class="card">
-        <h3>Appointments</h3>
-        <p>Therapy and doctor scheduling</p>
-      </div>
-
-      <div class="card">
-        <h3>Leads</h3>
-        <p>Lead and follow-up management</p>
-      </div>
-
-      <div class="card">
-        <h3>Billing</h3>
-        <p>Invoices and payments</p>
-      </div>
-
-      <div class="card">
-        <h3>Therapists</h3>
-        <p>Therapist allocation and schedules</p>
-      </div>
-
-      <div class="card">
-        <h3>Reports</h3>
-        <p>Clinic performance reports</p>
-      </div>
-
-    </section>
-
-  </main>
-
-  <script>
-    async function checkHealth() {
-      const result =
-        document.getElementById('result');
-
-      result.textContent = 'Checking...';
-
-      try {
-        const response =
-          await fetch('/api/health');
-
-        const data =
-          await response.json();
-
-        if (data.ok) {
-          result.textContent =
-            '✓ Database connection is working.';
-          result.style.color = 'green';
-        } else {
-          result.textContent =
-            'Database connection failed.';
-          result.style.color = 'red';
-        }
-
-      } catch (error) {
-        result.textContent =
-          'Unable to connect to CRM API.';
-        result.style.color = 'red';
-      }
-    }
-  </script>
-
-</body>
-</html>
+After committing it, wait for Render to redeploy, then open your Render URL. If the deployment succeeds, **send me a screenshot of the CRM login screen** and we'll test the login and each module one by one.
