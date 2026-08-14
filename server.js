@@ -8,50 +8,1662 @@ import rateLimit from 'express-rate-limit';
 import dotenv from 'dotenv';
 import fs from 'fs';
 import path from 'path';
-import {fileURLToPath} from 'url';
+import { fileURLToPath } from 'url';
+
 dotenv.config();
-const {Pool}=pg; const app=express();
-const __dirname=path.dirname(fileURLToPath(import.meta.url));
-const pool=new Pool({connectionString:process.env.DATABASE_URL||'postgresql://leelajani:leelajani@localhost:5432/leelajani_crm'});
-app.use(helmet({contentSecurityPolicy:false})); app.use(cors({origin:process.env.CORS_ORIGIN||true})); app.use(express.json({limit:'1mb'}));
-app.use('/api/auth/login',rateLimit({windowMs:15*60*1000,max:20,standardHeaders:true,legacyHeaders:false}));
-const q=(text,params=[])=>pool.query(text,params);
-const sign=u=>jwt.sign({id:u.id,name:u.name,role:u.role},process.env.JWT_SECRET||'dev-only-change-me',{expiresIn:process.env.JWT_EXPIRES_IN||'8h'});
-function auth(req,res,next){try{const h=req.headers.authorization||'';if(!h.startsWith('Bearer '))return res.status(401).json({error:'Authentication required'});req.user=jwt.verify(h.slice(7),process.env.JWT_SECRET||'dev-only-change-me');next()}catch{return res.status(401).json({error:'Invalid or expired session'})}}
-const allow=(...roles)=>(req,res,next)=>roles.includes(req.user.role)?next():res.status(403).json({error:'Insufficient permission'});
-async function audit(user,action,entity,id,details={}){await q('INSERT INTO audit_log(user_id,action,entity,entity_id,details) VALUES($1,$2,$3,$4,$5)',[user,action,entity,String(id??''),details]).catch(()=>{});}
-app.get('/api/health',async(_,res)=>{try{await q('SELECT 1');res.json({ok:true})}catch(e){res.status(503).json({ok:false,error:e.message})}});
-app.post('/api/auth/login',async(req,res)=>{try{const {username,password}=req.body;const r=await q('SELECT * FROM users WHERE username=$1 AND active=true',[username]);if(!r.rowCount)return res.status(401).json({error:'Invalid username or password'});const u=r.rows[0];if(!await bcrypt.compare(password,u.password_hash))return res.status(401).json({error:'Invalid username or password'});res.json({token:sign(u),user:{id:u.id,name:u.name,role:u.role,username:u.username}})}catch(e){res.status(500).json({error:e.message})}});
-app.get('/api/me',auth,(req,res)=>res.json(req.user));
-const crud={
- patients:{table:'patients',select:`SELECT * FROM patients ORDER BY id DESC`,write:['Admin','Doctor','Front Office'],read:['Admin','Doctor','Therapist','Front Office','Marketing']},
- leads:{table:'leads',select:`SELECT l.*,u.name owner_name FROM leads l LEFT JOIN users u ON u.id=l.owner_id ORDER BY l.id DESC`,write:['Admin','Front Office','Marketing'],read:['Admin','Doctor','Front Office','Marketing']},
- therapies:{table:'therapies',select:`SELECT * FROM therapies ORDER BY name`,write:['Admin'],read:['Admin','Doctor','Therapist','Front Office','Marketing']},
- therapists:{table:'therapists',select:`SELECT * FROM therapists ORDER BY name`,write:['Admin'],read:['Admin','Doctor','Therapist','Front Office']},
- rooms:{table:'rooms',select:`SELECT * FROM rooms ORDER BY id`,write:['Admin'],read:['Admin','Doctor','Therapist','Front Office']}
+
+const { Pool } = pg;
+const app = express();
+
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
+
+const pool = new Pool({
+  connectionString:
+    process.env.DATABASE_URL ||
+    'postgresql://leelajani:leelajani@localhost:5432/leelajani_crm'
+});
+
+app.use(
+  helmet({
+    contentSecurityPolicy: false
+  })
+);
+
+app.use(
+  cors({
+    origin: process.env.CORS_ORIGIN || true
+  })
+);
+
+app.use(express.json({ limit: '1mb' }));
+
+app.use(
+  '/api/auth/login',
+  rateLimit({
+    windowMs: 15 * 60 * 1000,
+    max: 20,
+    standardHeaders: true,
+    legacyHeaders: false
+  })
+);
+
+const q = (text, params = []) => pool.query(text, params);
+
+const sign = (u) =>
+  jwt.sign(
+    {
+      id: u.id,
+      name: u.name,
+      role: u.role
+    },
+    process.env.JWT_SECRET || 'dev-only-change-me',
+    {
+      expiresIn: process.env.JWT_EXPIRES_IN || '8h'
+    }
+  );
+
+function auth(req, res, next) {
+  try {
+    const h = req.headers.authorization || '';
+
+    if (!h.startsWith('Bearer ')) {
+      return res.status(401).json({
+        error: 'Authentication required'
+      });
+    }
+
+    req.user = jwt.verify(
+      h.slice(7),
+      process.env.JWT_SECRET || 'dev-only-change-me'
+    );
+
+    next();
+  } catch {
+    return res.status(401).json({
+      error: 'Invalid or expired session'
+    });
+  }
+}
+
+const allow =
+  (...roles) =>
+  (req, res, next) =>
+    roles.includes(req.user.role)
+      ? next()
+      : res.status(403).json({
+          error: 'Insufficient permission'
+        });
+
+async function audit(user, action, entity, id, details = {}) {
+  await q(
+    'INSERT INTO audit_log(user_id,action,entity,entity_id,details) VALUES($1,$2,$3,$4,$5)',
+    [user, action, entity, String(id ?? ''), details]
+  ).catch(() => {});
+}
+
+/* ---------------------------------------------------------
+   HEALTH
+--------------------------------------------------------- */
+
+app.get('/api/health', async (_, res) => {
+  try {
+    await q('SELECT 1');
+
+    res.json({
+      ok: true
+    });
+  } catch (e) {
+    res.status(503).json({
+      ok: false,
+      error: e.message
+    });
+  }
+});
+
+/* ---------------------------------------------------------
+   AUTH
+--------------------------------------------------------- */
+
+app.post('/api/auth/login', async (req, res) => {
+  try {
+    const { username, password } = req.body;
+
+    const r = await q(
+      'SELECT * FROM users WHERE username=$1 AND active=true',
+      [username]
+    );
+
+    if (!r.rowCount) {
+      return res.status(401).json({
+        error: 'Invalid username or password'
+      });
+    }
+
+    const u = r.rows[0];
+
+    if (!(await bcrypt.compare(password, u.password_hash))) {
+      return res.status(401).json({
+        error: 'Invalid username or password'
+      });
+    }
+
+    res.json({
+      token: sign(u),
+      user: {
+        id: u.id,
+        name: u.name,
+        role: u.role,
+        username: u.username
+      }
+    });
+  } catch (e) {
+    res.status(500).json({
+      error: e.message
+    });
+  }
+});
+
+app.get('/api/me', auth, (req, res) => {
+  res.json(req.user);
+});
+
+/* ---------------------------------------------------------
+   BASIC CRUD CONFIG
+--------------------------------------------------------- */
+
+const crud = {
+  patients: {
+    table: 'patients',
+    select: `SELECT * FROM patients ORDER BY id DESC`,
+    write: ['Admin', 'Doctor', 'Front Office'],
+    read: [
+      'Admin',
+      'Doctor',
+      'Therapist',
+      'Front Office',
+      'Marketing'
+    ]
+  },
+
+  leads: {
+    table: 'leads',
+    select: `
+      SELECT l.*, u.name owner_name
+      FROM leads l
+      LEFT JOIN users u ON u.id=l.owner_id
+      ORDER BY l.id DESC
+    `,
+    write: ['Admin', 'Front Office', 'Marketing'],
+    read: ['Admin', 'Doctor', 'Front Office', 'Marketing']
+  },
+
+  therapies: {
+    table: 'therapies',
+    select: `SELECT * FROM therapies ORDER BY name`,
+    write: ['Admin'],
+    read: [
+      'Admin',
+      'Doctor',
+      'Therapist',
+      'Front Office',
+      'Marketing'
+    ]
+  },
+
+  therapists: {
+    table: 'therapists',
+    select: `SELECT * FROM therapists ORDER BY name`,
+    write: ['Admin'],
+    read: ['Admin', 'Doctor', 'Therapist', 'Front Office']
+  },
+
+  rooms: {
+    table: 'rooms',
+    select: `SELECT * FROM rooms ORDER BY id`,
+    write: ['Admin'],
+    read: ['Admin', 'Doctor', 'Therapist', 'Front Office']
+  }
 };
-for(const [key,c] of Object.entries(crud)){app.get('/api/'+key,auth,allow(...c.read),async(req,res)=>{try{const r=await q(c.select);res.json(r.rows)}catch(e){res.status(500).json({error:e.message})}})}
-app.post('/api/patients',auth,allow(...crud.patients.write),async(req,res)=>{try{const b=req.body;const r=await q(`INSERT INTO patients(patient_code,first_name,last_name,dob,gender,marital_status,occupation,phone,email,address,emergency_name,emergency_phone,blood_group,allergies,past_history,medications,family_history,known_conditions,prakriti,vikriti,patient_type,lead_source,referred_by,status) VALUES($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19,$20,$21,$22,$23,$24) RETURNING *`,[b.patient_code||`P-${Date.now()}`,b.first_name,b.last_name,b.dob||null,b.gender,b.marital_status,b.occupation,b.phone,b.email,b.address,b.emergency_name,b.emergency_phone,b.blood_group,b.allergies,b.past_history,b.medications,b.family_history,b.known_conditions,b.prakriti,b.vikriti,b.patient_type||'Normal',b.lead_source,b.referred_by,b.status||'New']);await audit(req.user.id,'CREATE','patient',r.rows[0].id);res.status(201).json(r.rows[0])}catch(e){res.status(400).json({error:e.message})}});
-app.put('/api/patients/:id',auth,allow(...crud.patients.write),async(req,res)=>{try{const b=req.body;const cols=['first_name','last_name','dob','gender','marital_status','occupation','phone','email','address','emergency_name','emergency_phone','blood_group','allergies','past_history','medications','family_history','known_conditions','prakriti','vikriti','patient_type','lead_source','referred_by','status'];const vals=cols.map(k=>b[k]??null);vals.push(req.params.id);const r=await q(`UPDATE patients SET ${cols.map((x,i)=>`${x}=$${i+1}`).join(',')} WHERE id=$${cols.length+1} RETURNING *`,vals);if(!r.rowCount)return res.sendStatus(404);await audit(req.user.id,'UPDATE','patient',req.params.id);res.json(r.rows[0])}catch(e){res.status(400).json({error:e.message})}});
-app.delete('/api/patients/:id',auth,allow('Admin','Front Office'),async(req,res)=>{try{await q('DELETE FROM patients WHERE id=$1',[req.params.id]);await audit(req.user.id,'DELETE','patient',req.params.id);res.sendStatus(204)}catch(e){res.status(400).json({error:e.message})}});
-app.post('/api/leads',auth,allow(...crud.leads.write),async(req,res)=>{try{const b=req.body;const r=await q(`INSERT INTO leads(lead_code,name,phone,email,source,status,owner_id,follow_up_date,follow_up_time,follow_up_type,follow_up_note,lost_reason) VALUES($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12) RETURNING *`,[b.lead_code||`L-${Date.now()}`,b.name,b.phone,b.email,b.source,b.status||'New',b.owner_id||req.user.id,b.follow_up_date||null,b.follow_up_time||null,b.follow_up_type,b.follow_up_note,b.lost_reason]);res.status(201).json(r.rows[0])}catch(e){res.status(400).json({error:e.message})}});
-app.put('/api/leads/:id',auth,allow(...crud.leads.write),async(req,res)=>{try{const b=req.body;const cols=['name','phone','email','source','status','owner_id','follow_up_date','follow_up_time','follow_up_type','follow_up_note','lost_reason'];const vals=cols.map(k=>b[k]??null);vals.push(req.params.id);const r=await q(`UPDATE leads SET ${cols.map((x,i)=>`${x}=$${i+1}`).join(',')} WHERE id=$${cols.length+1} RETURNING *`,vals);res.json(r.rows[0])}catch(e){res.status(400).json({error:e.message})}});
-app.get('/api/users',auth,allow('Admin','Front Office','Marketing'),async(_,res)=>res.json((await q('SELECT id,username,name,role,active,created_at FROM users ORDER BY name')).rows));
-app.post('/api/users',auth,allow('Admin'),async(req,res)=>{try{const b=req.body;const hash=await bcrypt.hash(b.password,12);const r=await q('INSERT INTO users(username,password_hash,name,role) VALUES($1,$2,$3,$4) RETURNING id,username,name,role,active',[b.username,hash,b.name,b.role]);res.status(201).json(r.rows[0])}catch(e){res.status(400).json({error:e.message})}});
-app.get('/api/appointments',auth,async(req,res)=>{try{const where=req.query.date?'WHERE a.date=$1':'';const params=req.query.date?[req.query.date]:[];const r=await q(`SELECT a.*,p.patient_code,p.first_name,p.last_name,t.name therapist_name,r.name room_name,th.name therapy_name,u.name doctor_name FROM appointments a LEFT JOIN patients p ON p.id=a.patient_id LEFT JOIN therapists t ON t.id=a.therapist_id LEFT JOIN rooms r ON r.id=a.room_id LEFT JOIN therapies th ON th.id=a.therapy_id LEFT JOIN users u ON u.id=a.doctor_id ${where} ORDER BY a.date,a.start_time`,params);res.json(r.rows)}catch(e){res.status(500).json({error:e.message})}});
-function minutes(t){const [h,m]=String(t).slice(0,5).split(':').map(Number);return h*60+m} function overlaps(s,d,os,od){return minutes(s)<minutes(os)+Number(od)&&minutes(os)<minutes(s)+Number(d)}
-async function validateAppointment(b,excludeId=null){const errs=[];const therapy=b.therapy_id? (await q('SELECT * FROM therapies WHERE id=$1',[b.therapy_id])).rows[0]:null;const room=b.room_id? (await q('SELECT * FROM rooms WHERE id=$1',[b.room_id])).rows[0]:null;if(therapy?.steam_required&&!room?.steam)errs.push('Selected room does not have steam. Use Room 1 or Room 2.');if(b.therapist_id){const leave=await q('SELECT * FROM leaves WHERE therapist_id=$1 AND leave_date=$2',[b.therapist_id,b.date]);if(leave.rowCount){const l=leave.rows[0];if(!l.half_day_start||overlaps(b.start_time,b.duration_min,l.half_day_start,minutes(l.half_day_end)-minutes(l.half_day_start)))errs.push('Therapist is on leave/unavailable for this slot.')}}const r=await q(`SELECT a.*,t.name therapist_name,r.name room_name FROM appointments a LEFT JOIN therapists t ON t.id=a.therapist_id LEFT JOIN rooms r ON r.id=a.room_id WHERE a.date=$1 AND a.status<>'Cancelled' AND ($2::int IS NULL OR a.id<>$2)`,[b.date,excludeId]);for(const a of r.rows){if(b.therapist_id&&a.therapist_id===Number(b.therapist_id)&&overlaps(b.start_time,b.duration_min,a.start_time,a.duration_min))errs.push(`${a.therapist_name} is already booked at ${String(a.start_time).slice(0,5)}.`);if(b.room_id&&a.room_id===Number(b.room_id)&&overlaps(b.start_time,b.duration_min,a.start_time,a.duration_min))errs.push(`${a.room_name} is already occupied at ${String(a.start_time).slice(0,5)}.`)}return errs}
-app.post('/api/appointments',auth,allow('Admin','Doctor','Front Office'),async(req,res)=>{try{const b=req.body;const errs=await validateAppointment(b);if(errs.length)return res.status(409).json({error:'Scheduling conflict',details:errs,suggestions:await suggestions(b)});const r=await q(`INSERT INTO appointments(appointment_code,patient_id,date,start_time,duration_min,appointment_type,doctor_id,therapist_id,room_id,therapy_id,notes,status) VALUES($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12) RETURNING *`,[b.appointment_code||`A-${Date.now()}`,b.patient_id,b.date,b.start_time,b.duration_min,b.appointment_type,b.doctor_id||null,b.therapist_id||null,b.room_id||null,b.therapy_id||null,b.notes,b.status||'Scheduled']);res.status(201).json(r.rows[0])}catch(e){res.status(400).json({error:e.message})}});
-app.put('/api/appointments/:id',auth,allow('Admin','Doctor','Front Office'),async(req,res)=>{try{const b=req.body;const errs=await validateAppointment(b,req.params.id);if(errs.length)return res.status(409).json({error:'Scheduling conflict',details:errs,suggestions:await suggestions(b)});const r=await q(`UPDATE appointments SET patient_id=$1,date=$2,start_time=$3,duration_min=$4,appointment_type=$5,doctor_id=$6,therapist_id=$7,room_id=$8,therapy_id=$9,notes=$10,status=$11 WHERE id=$12 RETURNING *`,[b.patient_id,b.date,b.start_time,b.duration_min,b.appointment_type,b.doctor_id||null,b.therapist_id||null,b.room_id||null,b.therapy_id||null,b.notes,b.status||'Scheduled',req.params.id]);res.json(r.rows[0])}catch(e){res.status(400).json({error:e.message})}});
-async function suggestions(b){const therapy=b.therapy_id?(await q('SELECT gender_preference FROM therapies WHERE id=$1',[b.therapy_id])).rows[0]:null;let sql='SELECT t.* FROM therapists t WHERE t.active=true';const params=[];if(therapy?.gender_preference&&therapy.gender_preference!=='Any'){params.push(therapy.gender_preference);sql+=` AND t.gender=$${params.length}`}const ts=(await q(sql,params)).rows;const out=[];for(const t of ts){const c=await q(`SELECT a.start_time,a.duration_min FROM appointments a WHERE a.therapist_id=$1 AND a.date=$2 AND a.status<>'Cancelled'`,[t.id,b.date]);if(!c.rows.some(a=>overlaps(b.start_time,b.duration_min,a.start_time,a.duration_min)))out.push(t)}return out.slice(0,5)}
-app.get('/api/suggestions/therapists',auth,async(req,res)=>{res.json(await suggestions(req.query))});
-app.post('/api/leaves',auth,allow('Admin'),async(req,res)=>{try{const b=req.body;const r=await q('INSERT INTO leaves(therapist_id,leave_date,half_day_start,half_day_end,reason) VALUES($1,$2,$3,$4,$5) RETURNING *',[b.therapist_id,b.leave_date,b.half_day_start||null,b.half_day_end||null,b.reason]);res.status(201).json(r.rows[0])}catch(e){res.status(400).json({error:e.message})}});
-app.get('/api/invoices',auth,async(_,res)=>{try{const r=await q(`SELECT i.*,p.first_name,p.last_name,COALESCE(SUM(ii.quantity*ii.unit_price*(1+ii.gst/100)),0) total FROM invoices i LEFT JOIN patients p ON p.id=i.patient_id LEFT JOIN invoice_items ii ON ii.invoice_id=i.id GROUP BY i.id,p.first_name,p.last_name ORDER BY i.id DESC`);res.json(r.rows)}catch(e){res.status(500).json({error:e.message})}});
-app.post('/api/invoices',auth,allow('Admin','Front Office'),async(req,res)=>{const c=await pool.connect();try{await c.query('BEGIN');const b=req.body;const no=b.invoice_no||`INV-${new Date().toISOString().slice(0,7)}-${Date.now().toString().slice(-6)}`;const inv=(await c.query('INSERT INTO invoices(invoice_no,patient_id,invoice_date,status,payment_method) VALUES($1,$2,$3,$4,$5) RETURNING *',[no,b.patient_id,b.invoice_date||new Date(),b.status||'Pending',b.payment_method])).rows[0];for(const x of b.items||[])await c.query('INSERT INTO invoice_items(invoice_id,description,quantity,unit_price,gst) VALUES($1,$2,$3,$4,$5)',[inv.id,x.description,x.quantity,x.unit_price,x.gst||0]);await c.query('COMMIT');res.status(201).json(inv)}catch(e){await c.query('ROLLBACK');res.status(400).json({error:e.message})}finally{c.release()}});
-app.get('/api/reports/dashboard',auth,async(_,res)=>{try{const [p,l,i,a,u]=await Promise.all([q('SELECT COUNT(*) n FROM patients'),q("SELECT COUNT(*) n FROM leads WHERE status NOT IN ('Lost','Cold')"),q("SELECT COALESCE(SUM(ii.quantity*ii.unit_price*(1+ii.gst/100)),0) total FROM invoices i JOIN invoice_items ii ON ii.invoice_id=i.id WHERE i.status='Paid'"),q("SELECT COUNT(*) n FROM appointments WHERE date=CURRENT_DATE AND status<>'Cancelled'"),q("SELECT COUNT(*) n FROM users WHERE active")]);res.json({patients:Number(p.rows[0].n),activeLeads:Number(l.rows[0].n),revenue:Number(i.rows[0].total),todayAppointments:Number(a.rows[0].n),activeUsers:Number(u.rows[0].n)})}catch(e){res.status(500).json({error:e.message})}});
-app.get('/api/reports/revenue',auth,async(req,res)=>{const r=await q(`SELECT i.invoice_date date,COALESCE(SUM(ii.quantity*ii.unit_price*(1+ii.gst/100)),0) revenue FROM invoices i JOIN invoice_items ii ON ii.invoice_id=i.id WHERE i.status='Paid' AND i.invoice_date BETWEEN COALESCE($1::date,CURRENT_DATE-INTERVAL '30 days') AND COALESCE($2::date,CURRENT_DATE) GROUP BY i.invoice_date ORDER BY i.invoice_date`,[req.query.from||null,req.query.to||null]);res.json(r.rows)});
-app.get('/api/reports/therapists',auth,async(_,res)=>{const r=await q(`SELECT t.name,COUNT(a.id) sessions,COALESCE(SUM(a.duration_min),0) minutes FROM therapists t LEFT JOIN appointments a ON a.therapist_id=t.id AND a.status='Completed' GROUP BY t.id ORDER BY sessions DESC`);res.json(r.rows)});
-app.get('/api/audit',auth,allow('Admin'),async(_,res)=>res.json((await q(`SELECT a.*,u.name user_name FROM audit_log a LEFT JOIN users u ON u.id=a.user_id ORDER BY a.id DESC LIMIT 500`)).rows));
-app.get('/api/export/:type',auth,async(req,res)=>{const t=req.params.type;let rows=[];if(t==='patients')rows=(await q('SELECT patient_code,first_name,last_name,phone,email,patient_type,status,lead_source,created_at FROM patients ORDER BY id')).rows;else if(t==='leads')rows=(await q('SELECT lead_code,name,phone,email,source,status,follow_up_date FROM leads ORDER BY id')).rows;else if(t==='appointments')rows=(await q(`SELECT appointment_code,date,start_time,duration_min,appointment_type,status FROM appointments ORDER BY date,start_time`)).rows;else if(t==='invoices')rows=(await q(`SELECT invoice_no,invoice_date,status,payment_method FROM invoices ORDER BY id`)).rows;else return res.sendStatus(404);const keys=Object.keys(rows[0]||{});const csv=[keys.join(','),...rows.map(r=>keys.map(k=>JSON.stringify(r[k]??'')).join(','))].join('\n');res.setHeader('Content-Type','text/csv');res.setHeader('Content-Disposition',`attachment; filename=leelajani-${t}.csv`);res.send(csv)});
-app.use(express.static(path.join(__dirname,'public')));app.get('*',(req,res)=>res.sendFile(path.join(__dirname,'public/index.html')));
-async function init(){try{await q(fs.readFileSync(path.join(__dirname,'schema.sql'),'utf8'));await q(fs.readFileSync(path.join(__dirname,'seed.sql'),'utf8'));const r=await q('SELECT COUNT(*) n FROM users');if(Number(r.rows[0].n)===0){const hash=await bcrypt.hash('admin123',12);await q('INSERT INTO users(username,password_hash,name,role) VALUES($1,$2,$3,$4)', ['admin',hash,'Administrator','Admin']);await q('INSERT INTO users(username,password_hash,name,role) VALUES($1,$2,$3,$4)', ['doctor',await bcrypt.hash('doctor123',12),'Dr. Anusree','Doctor']);await q('INSERT INTO users(username,password_hash,name,role) VALUES($1,$2,$3,$4)', ['frontoffice',await bcrypt.hash('front123',12),'Front Office','Front Office']);}const port=Number(process.env.PORT||3000); app.listen(port,'0.0.0.0',()=>console.log(`CRM running on port ${port}`))}catch(e){console.error(e);process.exit(1)}}init();
+
+for (const [key, c] of Object.entries(crud)) {
+  app.get(
+    '/api/' + key,
+    auth,
+    allow(...c.read),
+    async (req, res) => {
+      try {
+        const r = await q(c.select);
+        res.json(r.rows);
+      } catch (e) {
+        res.status(500).json({
+          error: e.message
+        });
+      }
+    }
+  );
+}
+
+/* ---------------------------------------------------------
+   PATIENTS
+--------------------------------------------------------- */
+
+app.post(
+  '/api/patients',
+  auth,
+  allow(...crud.patients.write),
+  async (req, res) => {
+    try {
+      const b = req.body;
+
+      const r = await q(
+        `
+        INSERT INTO patients(
+          patient_code,
+          first_name,
+          last_name,
+          dob,
+          gender,
+          marital_status,
+          occupation,
+          phone,
+          email,
+          address,
+          emergency_name,
+          emergency_phone,
+          blood_group,
+          allergies,
+          past_history,
+          medications,
+          family_history,
+          known_conditions,
+          prakriti,
+          vikriti,
+          patient_type,
+          lead_source,
+          referred_by,
+          status
+        )
+        VALUES(
+          $1,$2,$3,$4,$5,$6,$7,$8,$9,$10,
+          $11,$12,$13,$14,$15,$16,$17,$18,$19,$20,
+          $21,$22,$23,$24
+        )
+        RETURNING *
+        `,
+        [
+          b.patient_code || `P-${Date.now()}`,
+          b.first_name,
+          b.last_name,
+          b.dob || null,
+          b.gender,
+          b.marital_status,
+          b.occupation,
+          b.phone,
+          b.email,
+          b.address,
+          b.emergency_name,
+          b.emergency_phone,
+          b.blood_group,
+          b.allergies,
+          b.past_history,
+          b.medications,
+          b.family_history,
+          b.known_conditions,
+          b.prakriti,
+          b.vikriti,
+          b.patient_type || 'Normal',
+          b.lead_source,
+          b.referred_by,
+          b.status || 'New'
+        ]
+      );
+
+      await audit(
+        req.user.id,
+        'CREATE',
+        'patient',
+        r.rows[0].id
+      );
+
+      res.status(201).json(r.rows[0]);
+    } catch (e) {
+      res.status(400).json({
+        error: e.message
+      });
+    }
+  }
+);
+
+app.put(
+  '/api/patients/:id',
+  auth,
+  allow(...crud.patients.write),
+  async (req, res) => {
+    try {
+      const b = req.body;
+
+      const cols = [
+        'first_name',
+        'last_name',
+        'dob',
+        'gender',
+        'marital_status',
+        'occupation',
+        'phone',
+        'email',
+        'address',
+        'emergency_name',
+        'emergency_phone',
+        'blood_group',
+        'allergies',
+        'past_history',
+        'medications',
+        'family_history',
+        'known_conditions',
+        'prakriti',
+        'vikriti',
+        'patient_type',
+        'lead_source',
+        'referred_by',
+        'status'
+      ];
+
+      const vals = cols.map((k) => b[k] ?? null);
+
+      vals.push(req.params.id);
+
+      const r = await q(
+        `
+        UPDATE patients
+        SET ${cols
+          .map((x, i) => `${x}=$${i + 1}`)
+          .join(',')}
+        WHERE id=$${cols.length + 1}
+        RETURNING *
+        `,
+        vals
+      );
+
+      if (!r.rowCount) {
+        return res.sendStatus(404);
+      }
+
+      await audit(
+        req.user.id,
+        'UPDATE',
+        'patient',
+        req.params.id
+      );
+
+      res.json(r.rows[0]);
+    } catch (e) {
+      res.status(400).json({
+        error: e.message
+      });
+    }
+  }
+);
+
+app.delete(
+  '/api/patients/:id',
+  auth,
+  allow('Admin', 'Front Office'),
+  async (req, res) => {
+    try {
+      await q(
+        'DELETE FROM patients WHERE id=$1',
+        [req.params.id]
+      );
+
+      await audit(
+        req.user.id,
+        'DELETE',
+        'patient',
+        req.params.id
+      );
+
+      res.sendStatus(204);
+    } catch (e) {
+      res.status(400).json({
+        error: e.message
+      });
+    }
+  }
+);
+
+/* ---------------------------------------------------------
+   LEADS
+--------------------------------------------------------- */
+
+app.post(
+  '/api/leads',
+  auth,
+  allow(...crud.leads.write),
+  async (req, res) => {
+    try {
+      const b = req.body;
+
+      const r = await q(
+        `
+        INSERT INTO leads(
+          lead_code,
+          name,
+          phone,
+          email,
+          source,
+          status,
+          owner_id,
+          follow_up_date,
+          follow_up_time,
+          follow_up_type,
+          follow_up_note,
+          lost_reason
+        )
+        VALUES(
+          $1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12
+        )
+        RETURNING *
+        `,
+        [
+          b.lead_code || `L-${Date.now()}`,
+          b.name,
+          b.phone,
+          b.email,
+          b.source,
+          b.status || 'New',
+          b.owner_id || req.user.id,
+          b.follow_up_date || null,
+          b.follow_up_time || null,
+          b.follow_up_type,
+          b.follow_up_note,
+          b.lost_reason
+        ]
+      );
+
+      res.status(201).json(r.rows[0]);
+    } catch (e) {
+      res.status(400).json({
+        error: e.message
+      });
+    }
+  }
+);
+
+app.put(
+  '/api/leads/:id',
+  auth,
+  allow(...crud.leads.write),
+  async (req, res) => {
+    try {
+      const b = req.body;
+
+      const cols = [
+        'name',
+        'phone',
+        'email',
+        'source',
+        'status',
+        'owner_id',
+        'follow_up_date',
+        'follow_up_time',
+        'follow_up_type',
+        'follow_up_note',
+        'lost_reason'
+      ];
+
+      const vals = cols.map((k) => b[k] ?? null);
+
+      vals.push(req.params.id);
+
+      const r = await q(
+        `
+        UPDATE leads
+        SET ${cols
+          .map((x, i) => `${x}=$${i + 1}`)
+          .join(',')}
+        WHERE id=$${cols.length + 1}
+        RETURNING *
+        `,
+        vals
+      );
+
+      res.json(r.rows[0]);
+    } catch (e) {
+      res.status(400).json({
+        error: e.message
+      });
+    }
+  }
+);
+
+/* ---------------------------------------------------------
+   USERS
+--------------------------------------------------------- */
+
+app.get(
+  '/api/users',
+  auth,
+  allow('Admin', 'Front Office', 'Marketing'),
+  async (_, res) => {
+    try {
+      const r = await q(
+        `
+        SELECT
+          id,
+          username,
+          name,
+          role,
+          active,
+          created_at
+        FROM users
+        ORDER BY name
+        `
+      );
+
+      res.json(r.rows);
+    } catch (e) {
+      res.status(500).json({
+        error: e.message
+      });
+    }
+  }
+);
+
+app.post(
+  '/api/users',
+  auth,
+  allow('Admin'),
+  async (req, res) => {
+    try {
+      const b = req.body;
+
+      const hash = await bcrypt.hash(
+        b.password,
+        12
+      );
+
+      const r = await q(
+        `
+        INSERT INTO users(
+          username,
+          password_hash,
+          name,
+          role
+        )
+        VALUES($1,$2,$3,$4)
+        RETURNING id,username,name,role,active
+        `,
+        [
+          b.username,
+          hash,
+          b.name,
+          b.role
+        ]
+      );
+
+      res.status(201).json(r.rows[0]);
+    } catch (e) {
+      res.status(400).json({
+        error: e.message
+      });
+    }
+  }
+);
+
+/* ---------------------------------------------------------
+   APPOINTMENTS
+--------------------------------------------------------- */
+
+app.get(
+  '/api/appointments',
+  auth,
+  async (req, res) => {
+    try {
+      const where = req.query.date
+        ? 'WHERE a.date=$1'
+        : '';
+
+      const params = req.query.date
+        ? [req.query.date]
+        : [];
+
+      const r = await q(
+        `
+        SELECT
+          a.*,
+          p.patient_code,
+          p.first_name,
+          p.last_name,
+          t.name therapist_name,
+          r.name room_name,
+          th.name therapy_name,
+          u.name doctor_name
+        FROM appointments a
+        LEFT JOIN patients p
+          ON p.id=a.patient_id
+        LEFT JOIN therapists t
+          ON t.id=a.therapist_id
+        LEFT JOIN rooms r
+          ON r.id=a.room_id
+        LEFT JOIN therapies th
+          ON th.id=a.therapy_id
+        LEFT JOIN users u
+          ON u.id=a.doctor_id
+        ${where}
+        ORDER BY a.date,a.start_time
+        `,
+        params
+      );
+
+      res.json(r.rows);
+    } catch (e) {
+      res.status(500).json({
+        error: e.message
+      });
+    }
+  }
+);
+
+function minutes(t) {
+  const [h, m] = String(t)
+    .slice(0, 5)
+    .split(':')
+    .map(Number);
+
+  return h * 60 + m;
+}
+
+function overlaps(
+  start,
+  duration,
+  otherStart,
+  otherDuration
+) {
+  return (
+    minutes(start) <
+      minutes(otherStart) +
+        Number(otherDuration) &&
+    minutes(otherStart) <
+      minutes(start) +
+        Number(duration)
+  );
+}
+
+async function validateAppointment(
+  b,
+  excludeId = null
+) {
+  const errs = [];
+
+  const therapy = b.therapy_id
+    ? (
+        await q(
+          'SELECT * FROM therapies WHERE id=$1',
+          [b.therapy_id]
+        )
+      ).rows[0]
+    : null;
+
+  const room = b.room_id
+    ? (
+        await q(
+          'SELECT * FROM rooms WHERE id=$1',
+          [b.room_id]
+        )
+      ).rows[0]
+    : null;
+
+  if (
+    therapy?.steam_required &&
+    !room?.steam
+  ) {
+    errs.push(
+      'Selected room does not have steam. Use Room 1 or Room 2.'
+    );
+  }
+
+  if (b.therapist_id) {
+    const leave = await q(
+      `
+      SELECT *
+      FROM leaves
+      WHERE therapist_id=$1
+      AND leave_date=$2
+      `,
+      [
+        b.therapist_id,
+        b.date
+      ]
+    );
+
+    if (leave.rowCount) {
+      const l = leave.rows[0];
+
+      if (
+        !l.half_day_start ||
+        overlaps(
+          b.start_time,
+          b.duration_min,
+          l.half_day_start,
+          minutes(l.half_day_end) -
+            minutes(l.half_day_start)
+        )
+      ) {
+        errs.push(
+          'Therapist is on leave/unavailable for this slot.'
+        );
+      }
+    }
+  }
+
+  const r = await q(
+    `
+    SELECT
+      a.*,
+      t.name therapist_name,
+      r.name room_name
+    FROM appointments a
+    LEFT JOIN therapists t
+      ON t.id=a.therapist_id
+    LEFT JOIN rooms r
+      ON r.id=a.room_id
+    WHERE a.date=$1
+      AND a.status<>'Cancelled'
+      AND ($2::int IS NULL OR a.id<>$2)
+    `,
+    [
+      b.date,
+      excludeId
+    ]
+  );
+
+  for (const a of r.rows) {
+    if (
+      b.therapist_id &&
+      a.therapist_id ===
+        Number(b.therapist_id) &&
+      overlaps(
+        b.start_time,
+        b.duration_min,
+        a.start_time,
+        a.duration_min
+      )
+    ) {
+      errs.push(
+        `${a.therapist_name} is already booked at ${String(
+          a.start_time
+        ).slice(0, 5)}.`
+      );
+    }
+
+    if (
+      b.room_id &&
+      a.room_id === Number(b.room_id) &&
+      overlaps(
+        b.start_time,
+        b.duration_min,
+        a.start_time,
+        a.duration_min
+      )
+    ) {
+      errs.push(
+        `${a.room_name} is already occupied at ${String(
+          a.start_time
+        ).slice(0, 5)}.`
+      );
+    }
+  }
+
+  return errs;
+}
+
+async function suggestions(b) {
+  const therapy = b.therapy_id
+    ? (
+        await q(
+          'SELECT gender_preference FROM therapies WHERE id=$1',
+          [b.therapy_id]
+        )
+      ).rows[0]
+    : null;
+
+  let sql =
+    'SELECT t.* FROM therapists t WHERE t.active=true';
+
+  const params = [];
+
+  if (
+    therapy?.gender_preference &&
+    therapy.gender_preference !== 'Any'
+  ) {
+    params.push(
+      therapy.gender_preference
+    );
+
+    sql += ` AND t.gender=$${params.length}`;
+  }
+
+  const ts = (
+    await q(sql, params)
+  ).rows;
+
+  const out = [];
+
+  for (const t of ts) {
+    const c = await q(
+      `
+      SELECT
+        a.start_time,
+        a.duration_min
+      FROM appointments a
+      WHERE a.therapist_id=$1
+        AND a.date=$2
+        AND a.status<>'Cancelled'
+      `,
+      [
+        t.id,
+        b.date
+      ]
+    );
+
+    if (
+      !c.rows.some((a) =>
+        overlaps(
+          b.start_time,
+          b.duration_min,
+          a.start_time,
+          a.duration_min
+        )
+      )
+    ) {
+      out.push(t);
+    }
+  }
+
+  return out.slice(0, 5);
+}
+
+app.post(
+  '/api/appointments',
+  auth,
+  allow('Admin', 'Doctor', 'Front Office'),
+  async (req, res) => {
+    try {
+      const b = req.body;
+
+      const errs =
+        await validateAppointment(b);
+
+      if (errs.length) {
+        return res.status(409).json({
+          error: 'Scheduling conflict',
+          details: errs,
+          suggestions:
+            await suggestions(b)
+        });
+      }
+
+      const r = await q(
+        `
+        INSERT INTO appointments(
+          appointment_code,
+          patient_id,
+          date,
+          start_time,
+          duration_min,
+          appointment_type,
+          doctor_id,
+          therapist_id,
+          room_id,
+          therapy_id,
+          notes,
+          status
+        )
+        VALUES(
+          $1,$2,$3,$4,$5,$6,
+          $7,$8,$9,$10,$11,$12
+        )
+        RETURNING *
+        `,
+        [
+          b.appointment_code ||
+            `A-${Date.now()}`,
+          b.patient_id,
+          b.date,
+          b.start_time,
+          b.duration_min,
+          b.appointment_type,
+          b.doctor_id || null,
+          b.therapist_id || null,
+          b.room_id || null,
+          b.therapy_id || null,
+          b.notes,
+          b.status || 'Scheduled'
+        ]
+      );
+
+      res.status(201).json(
+        r.rows[0]
+      );
+    } catch (e) {
+      res.status(400).json({
+        error: e.message
+      });
+    }
+  }
+);
+
+app.put(
+  '/api/appointments/:id',
+  auth,
+  allow('Admin', 'Doctor', 'Front Office'),
+  async (req, res) => {
+    try {
+      const b = req.body;
+
+      const errs =
+        await validateAppointment(
+          b,
+          req.params.id
+        );
+
+      if (errs.length) {
+        return res.status(409).json({
+          error: 'Scheduling conflict',
+          details: errs,
+          suggestions:
+            await suggestions(b)
+        });
+      }
+
+      const r = await q(
+        `
+        UPDATE appointments
+        SET
+          patient_id=$1,
+          date=$2,
+          start_time=$3,
+          duration_min=$4,
+          appointment_type=$5,
+          doctor_id=$6,
+          therapist_id=$7,
+          room_id=$8,
+          therapy_id=$9,
+          notes=$10,
+          status=$11
+        WHERE id=$12
+        RETURNING *
+        `,
+        [
+          b.patient_id,
+          b.date,
+          b.start_time,
+          b.duration_min,
+          b.appointment_type,
+          b.doctor_id || null,
+          b.therapist_id || null,
+          b.room_id || null,
+          b.therapy_id || null,
+          b.notes,
+          b.status || 'Scheduled',
+          req.params.id
+        ]
+      );
+
+      res.json(r.rows[0]);
+    } catch (e) {
+      res.status(400).json({
+        error: e.message
+      });
+    }
+  }
+);
+
+app.get(
+  '/api/suggestions/therapists',
+  auth,
+  async (req, res) => {
+    try {
+      res.json(
+        await suggestions(req.query)
+      );
+    } catch (e) {
+      res.status(500).json({
+        error: e.message
+      });
+    }
+  }
+);
+
+/* ---------------------------------------------------------
+   LEAVES
+--------------------------------------------------------- */
+
+app.post(
+  '/api/leaves',
+  auth,
+  allow('Admin'),
+  async (req, res) => {
+    try {
+      const b = req.body;
+
+      const r = await q(
+        `
+        INSERT INTO leaves(
+          therapist_id,
+          leave_date,
+          half_day_start,
+          half_day_end,
+          reason
+        )
+        VALUES($1,$2,$3,$4,$5)
+        RETURNING *
+        `,
+        [
+          b.therapist_id,
+          b.leave_date,
+          b.half_day_start || null,
+          b.half_day_end || null,
+          b.reason
+        ]
+      );
+
+      res.status(201).json(
+        r.rows[0]
+      );
+    } catch (e) {
+      res.status(400).json({
+        error: e.message
+      });
+    }
+  }
+);
+
+/* ---------------------------------------------------------
+   INVOICES
+--------------------------------------------------------- */
+
+app.get(
+  '/api/invoices',
+  auth,
+  async (_, res) => {
+    try {
+      const r = await q(`
+        SELECT
+          i.*,
+          p.first_name,
+          p.last_name,
+          COALESCE(
+            SUM(
+              ii.quantity *
+              ii.unit_price *
+              (1 + ii.gst / 100)
+            ),
+            0
+          ) total
+        FROM invoices i
+        LEFT JOIN patients p
+          ON p.id=i.patient_id
+        LEFT JOIN invoice_items ii
+          ON ii.invoice_id=i.id
+        GROUP BY
+          i.id,
+          p.first_name,
+          p.last_name
+        ORDER BY i.id DESC
+      `);
+
+      res.json(r.rows);
+    } catch (e) {
+      res.status(500).json({
+        error: e.message
+      });
+    }
+  }
+);
+
+app.post(
+  '/api/invoices',
+  auth,
+  allow('Admin', 'Front Office'),
+  async (req, res) => {
+    const c = await pool.connect();
+
+    try {
+      await c.query('BEGIN');
+
+      const b = req.body;
+
+      const no =
+        b.invoice_no ||
+        `INV-${new Date()
+          .toISOString()
+          .slice(0, 7)}-${Date.now()
+          .toString()
+          .slice(-6)}`;
+
+      const inv = (
+        await c.query(
+          `
+          INSERT INTO invoices(
+            invoice_no,
+            patient_id,
+            invoice_date,
+            status,
+            payment_method
+          )
+          VALUES($1,$2,$3,$4,$5)
+          RETURNING *
+          `,
+          [
+            no,
+            b.patient_id,
+            b.invoice_date ||
+              new Date(),
+            b.status ||
+              'Pending',
+            b.payment_method
+          ]
+        )
+      ).rows[0];
+
+      for (const x of b.items || []) {
+        await c.query(
+          `
+          INSERT INTO invoice_items(
+            invoice_id,
+            description,
+            quantity,
+            unit_price,
+            gst
+          )
+          VALUES($1,$2,$3,$4,$5)
+          `,
+          [
+            inv.id,
+            x.description,
+            x.quantity,
+            x.unit_price,
+            x.gst || 0
+          ]
+        );
+      }
+
+      await c.query('COMMIT');
+
+      res.status(201).json(inv);
+    } catch (e) {
+      await c.query('ROLLBACK');
+
+      res.status(400).json({
+        error: e.message
+      });
+    } finally {
+      c.release();
+    }
+  }
+);
+
+/* ---------------------------------------------------------
+   REPORTS
+--------------------------------------------------------- */
+
+app.get(
+  '/api/reports/dashboard',
+  auth,
+  async (_, res) => {
+    try {
+      const [
+        p,
+        l,
+        i,
+        a,
+        u
+      ] = await Promise.all([
+        q(
+          'SELECT COUNT(*) n FROM patients'
+        ),
+
+        q(
+          `
+          SELECT COUNT(*) n
+          FROM leads
+          WHERE status NOT IN ('Lost','Cold')
+          `
+        ),
+
+        q(
+          `
+          SELECT COALESCE(
+            SUM(
+              ii.quantity *
+              ii.unit_price *
+              (1 + ii.gst / 100)
+            ),
+            0
+          ) total
+          FROM invoices i
+          JOIN invoice_items ii
+            ON ii.invoice_id=i.id
+          WHERE i.status='Paid'
+          `
+        ),
+
+        q(
+          `
+          SELECT COUNT(*) n
+          FROM appointments
+          WHERE date=CURRENT_DATE
+            AND status<>'Cancelled'
+          `
+        ),
+
+        q(
+          `
+          SELECT COUNT(*) n
+          FROM users
+          WHERE active
+          `
+        )
+      ]);
+
+      res.json({
+        patients:
+          Number(p.rows[0].n),
+
+        activeLeads:
+          Number(l.rows[0].n),
+
+        revenue:
+          Number(i.rows[0].total),
+
+        todayAppointments:
+          Number(a.rows[0].n),
+
+        activeUsers:
+          Number(u.rows[0].n)
+      });
+    } catch (e) {
+      res.status(500).json({
+        error: e.message
+      });
+    }
+  }
+);
+
+app.get(
+  '/api/reports/revenue',
+  auth,
+  async (req, res) => {
+    try {
+      const r = await q(
+        `
+        SELECT
+          i.invoice_date date,
+          COALESCE(
+            SUM(
+              ii.quantity *
+              ii.unit_price *
+              (1 + ii.gst / 100)
+            ),
+            0
+          ) revenue
+        FROM invoices i
+        JOIN invoice_items ii
+          ON ii.invoice_id=i.id
+        WHERE i.status='Paid'
+          AND i.invoice_date
+            BETWEEN
+              COALESCE(
+                $1::date,
+                CURRENT_DATE-INTERVAL '30 days'
+              )
+              AND
+              COALESCE(
+                $2::date,
+                CURRENT_DATE
+              )
+        GROUP BY i.invoice_date
+        ORDER BY i.invoice_date
+        `,
+        [
+          req.query.from || null,
+          req.query.to || null
+        ]
+      );
+
+      res.json(r.rows);
+    } catch (e) {
+      res.status(500).json({
+        error: e.message
+      });
+    }
+  }
+);
+
+app.get(
+  '/api/reports/therapists',
+  auth,
+  async (_, res) => {
+    try {
+      const r = await q(`
+        SELECT
+          t.name,
+          COUNT(a.id) sessions,
+          COALESCE(
+            SUM(a.duration_min),
+            0
+          ) minutes
+        FROM therapists t
+        LEFT JOIN appointments a
+          ON a.therapist_id=t.id
+          AND a.status='Completed'
+        GROUP BY t.id
+        ORDER BY sessions DESC
+      `);
+
+      res.json(r.rows);
+    } catch (e) {
+      res.status(500).json({
+        error: e.message
+      });
+    }
+  }
+);
+
+/* ---------------------------------------------------------
+   AUDIT
+--------------------------------------------------------- */
+
+app.get(
+  '/api/audit',
+  auth,
+  allow('Admin'),
+  async (_, res) => {
+    try {
+      const r = await q(`
+        SELECT
+          a.*,
+          u.name user_name
+        FROM audit_log a
+        LEFT JOIN users u
+          ON u.id=a.user_id
+        ORDER BY a.id DESC
+        LIMIT 500
+      `);
+
+      res.json(r.rows);
+    } catch (e) {
+      res.status(500).json({
+        error: e.message
+      });
+    }
+  }
+);
+
+/* ---------------------------------------------------------
+   EXPORTS
+--------------------------------------------------------- */
+
+app.get(
+  '/api/export/:type',
+  auth,
+  async (req, res) => {
+    try {
+      const t = req.params.type;
+
+      let rows = [];
+
+      if (t === 'patients') {
+        rows = (
+          await q(`
+            SELECT
+              patient_code,
+              first_name,
+              last_name,
+              phone,
+              email,
+              patient_type,
+              status,
+              lead_source,
+              created_at
+            FROM patients
+            ORDER BY id
+          `)
+        ).rows;
+      } else if (t === 'leads') {
+        rows = (
+          await q(`
+            SELECT
+              lead_code,
+              name,
+              phone,
+              email,
+              source,
+              status,
+              follow_up_date
+            FROM leads
+            ORDER BY id
+          `)
+        ).rows;
+      } else if (
+        t === 'appointments'
+      ) {
+        rows = (
+          await q(`
+            SELECT
+              appointment_code,
+              date,
+              start_time,
+              duration_min,
+              appointment_type,
+              status
+            FROM appointments
+            ORDER BY date,start_time
+          `)
+        ).rows;
+      } else if (t === 'invoices') {
+        rows = (
+          await q(`
+            SELECT
+              invoice_no,
+              invoice_date,
+              status,
+              payment_method
+            FROM invoices
+            ORDER BY id
+          `)
+        ).rows;
+      } else {
+        return res.sendStatus(404);
+      }
+
+      const keys = Object.keys(
+        rows[0] || {}
+      );
+
+      const csv = [
+        keys.join(','),
+        ...rows.map((r) =>
+          keys
+            .map((k) =>
+              JSON.stringify(
+                r[k] ?? ''
+              )
+            )
+            .join(',')
+        )
+      ].join('\n');
+
+      res.setHeader(
+        'Content-Type',
+        'text/csv'
+      );
+
+      res.setHeader(
+        'Content-Disposition',
+        `attachment; filename=leelajani-${t}.csv`
+      );
+
+      res.send(csv);
+    } catch (e) {
+      res.status(500).json({
+        error: e.message
+      });
+    }
+  }
+);
+
+/* ---------------------------------------------------------
+   STATIC FRONTEND
+--------------------------------------------------------- */
+
+app.use(
+  express.static(
+    path.join(__dirname, 'public')
+  )
+);
+
+/*
+ * IMPORTANT:
+ * Express 5 no longer accepts app.get('*').
+ * This named wildcard also matches the root path.
+ */
+app.get(
+  '/{*splat}',
+  (req, res) => {
+    res.sendFile(
+      path.join(
+        __dirname,
+        'public',
+        'index.html'
+      )
+    );
+  }
+);
+
+/* ---------------------------------------------------------
+   DATABASE INITIALIZATION
+--------------------------------------------------------- */
+
+async function init() {
+  try {
+    const schema = fs.readFileSync(
+      path.join(
+        __dirname,
+        'schema.sql'
+      ),
+      'utf8'
+    );
+
+    await q(schema);
+
+    const seed = fs.readFileSync(
+      path.join(
+        __dirname,
+        'seed.sql'
+      ),
+      'utf8'
+    );
+
+    await q(seed);
+
+    const r = await q(
+      'SELECT COUNT(*) n FROM users'
+    );
+
+    if (
+      Number(r.rows[0].n) === 0
+    ) {
+      const adminHash =
+        await bcrypt.hash(
+          'admin123',
+          12
+        );
+
+      const doctorHash =
+        await bcrypt.hash(
+          'doctor123',
+          12
+        );
+
+      const frontOfficeHash =
+        await bcrypt.hash(
+          'front123',
+          12
+        );
+
+      await q(
+        `
+        INSERT INTO users(
+          username,
+          password_hash,
+          name,
+          role
+        )
+        VALUES($1,$2,$3,$4)
+        `,
+        [
+          'admin',
+          adminHash,
+          'Administrator',
+          'Admin'
+        ]
+      );
+
+      await q(
+        `
+        INSERT INTO users(
+          username,
+          password_hash,
+          name,
+          role
+        )
+        VALUES($1,$2,$3,$4)
+        `,
+        [
+          'doctor',
+          doctorHash,
+          'Dr. Anusree',
+          'Doctor'
+        ]
+      );
+
+      await q(
+        `
+        INSERT INTO users(
+          username,
+          password_hash,
+          name,
+          role
+        )
+        VALUES($1,$2,$3,$4)
+        `,
+        [
+          'frontoffice',
+          frontOfficeHash,
+          'Front Office',
+          'Front Office'
+        ]
+      );
+    }
+
+    const port = Number(
+      process.env.PORT || 3000
+    );
+
+    app.listen(
+      port,
+      '0.0.0.0',
+      () =>
+        console.log(
+          `CRM running on port ${port}`
+        )
+    );
+  } catch (e) {
+    console.error(e);
+    process.exit(1);
+  }
+}
+
+init();
