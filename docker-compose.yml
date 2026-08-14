@@ -1,0 +1,14 @@
+services:
+  db:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: leelajani_crm
+      POSTGRES_USER: leelajani
+      POSTGRES_PASSWORD: leelajani
+    ports:
+      - "5432:5432"
+    volumes:
+      - leelajani_pg:/var/lib/postgresql/data
+volumes:
+  leelajani_pg:
